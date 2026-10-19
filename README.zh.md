@@ -2,7 +2,7 @@
 
 > [English](README.md) | 中文
 >
-> 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)。
+> 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)。
 
 Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
 反向代理到 `/remotes/<id>/` 下。因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 的同源限制
