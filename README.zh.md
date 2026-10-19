@@ -204,14 +204,16 @@ ssh -N -L 3182:127.0.0.1:3080 yhuan@192.168.4.50
 ## 安装到 profile
 
 ```
-# 1) 让 profile 能解析到这个插件
-ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/node_modules/dsh-remote-hub
-ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modules/dsh-remote-hub
-
-# 2) 把上面的 insert 行追加到 ~/.dsh/profiles/web/cordis.patch.yml
-
-# 3) 重启 dsh web（GUI 重新连接即可）
+git clone https://github.com/yhuan416/dsh-remote-hub ~/.dsh/plugins/dsh-remote-hub
+cd ~/.dsh/plugins/dsh-remote-hub
+./scripts/install.sh web
 ```
+
+脚本会：软链包 → 在 profile 的 `package.json` 里登记为 **dependency** 并加入 **bundle 选择**
+（Plugins 页只列 dependency，纯 patch 行不会出现）→ 如存在旧的手工 patch 行则删除 →
+改动前自动备份。之后必须重启 `dsh web`（bundle 选择在启动期组合）。
+
+管理入口：**设置 → 插件 → 已安装插件 → dsh-remote-hub**。
 
 ## 路线图
 

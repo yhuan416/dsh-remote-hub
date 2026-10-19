@@ -217,14 +217,17 @@ ssh -N -L 3182:127.0.0.1:3080 yhuan@192.168.4.50
 ## Install into a profile
 
 ```sh
-# 1) make the plugin resolvable from the profile
-ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/node_modules/dsh-remote-hub
-ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modules/dsh-remote-hub
-
-# 2) append the insert row above to ~/.dsh/profiles/web/cordis.patch.yml
-
-# 3) restart dsh web (the GUI reconnects on reload)
+git clone https://github.com/yhuan416/dsh-remote-hub ~/.dsh/plugins/dsh-remote-hub
+cd ~/.dsh/plugins/dsh-remote-hub
+./scripts/install.sh web
 ```
+
+The script symlinks the package, records it as a profile **dependency** and selects it as a
+**bundle** (the Plugins page only lists packages that are dependencies; a bare patch row stays
+invisible there), drops the legacy manual patch row when present, and backs up both files first.
+Restart `dsh web` afterwards: the bundle selection is composed at startup.
+
+Management lives in **Settings → Plugins → Installed plugins → dsh-remote-hub**.
 
 ## Roadmap
 

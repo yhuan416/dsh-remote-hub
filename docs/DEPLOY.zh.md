@@ -63,17 +63,24 @@ cat ~/.dsh/remote-agent.json
 git clone https://github.com/yhuan416/dsh-remote-hub ~/.dsh/plugins/dsh-remote-hub
 cd ~/.dsh/plugins/dsh-remote-hub
 ./scripts/install.sh web
+
+脚本做三件事：软链包；在 `~/.dsh/profiles/web/package.json` 里加 **dependency** 和 **bundle 选择**；
+删除旧版本留下的手工 `remote-hub` patch 行（改动前都会备份）。
+
+> 为什么必须是 dependency + bundle：Plugins 页只列 `installed`（即 profile dependency）或官方包。
+> 只写 patch 行的话插件能跑，但插件页里看不到它。
 ```
 
-### 2.2 重启（或等热加载）
+### 2.2 重启（必需）
 
-profile 默认 `patchReload: live`，新增的插件行通常会被热加载；不确定时直接重启 dsh web。
+bundle 选择是在 **启动期** 组合的，所以首次安装/变更后必须重启 dsh web；
+之后插件内部的配置改动仍可热加载。
 
 ### 2.3 验证
 
 ```
 curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/remotes/
-# 401 = 插件已加载（只是没认证）；404 = 没加载，检查软链与 patch 行后重启
+# 401 = 插件已加载（只是没认证）；404 = 没加载，检查 package.json 的 dependency/bundle 与软链后重启
 ```
 
 然后打开 Hub 启动行里打印的 `http://127.0.0.1:3080/?token=...`：
@@ -178,7 +185,7 @@ Backend 上的 agent 同理。
 ### 5.4 卸载 / 回滚
 
 ```
-# 1) 删掉 cordis.patch.yml 里对应的 - insert: 行
+# 1) 从 package.json 删除 dependencies.dsh-remote-hub 与 dsh.profile.bundles 里的 "dsh-remote-hub"
 # 2) 删软链
 rm -f ~/.dsh/profiles/web/node_modules/dsh-remote-hub
 rm -f ~/.dsh/profiles/node_modules/dsh-remote-hub
