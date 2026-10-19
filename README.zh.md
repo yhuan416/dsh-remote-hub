@@ -155,6 +155,14 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 
 token 是凭据：profile 文件保持 0600，并且不要写进日志。
 
+可调参数（与 remotes 同一层配置）：
+
+```yaml
+config:
+  upstreamTimeoutMs: 30000   # 响应头超时；超时返回 504
+  probeIntervalMs: 30000     # 周期健康探测（GET /）；0 关闭
+```
+
 ## 传输方式
 
 每个远端二选一：

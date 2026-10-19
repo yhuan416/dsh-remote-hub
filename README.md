@@ -66,7 +66,7 @@ Runtime configuration lives in `$DSH_HOME/remote-hosts.json` (0600, atomic write
 
 | Route | Method | Body | Result |
 |---|---|---|---|
-| /api/remote-hosts/list | GET | — | sanitized remotes + tunnel/token state |
+| /api/remote-hosts/list | GET | — | sanitized remotes + state/health/latency/tunnel/token/stats |
 | /api/remote-hosts/save | POST | label, transport, ssh{host,user,port}, remotePort, localPort, upstream, tokenMode, token, tokenPath | { ok, id } |
 | /api/remote-hosts/remove | POST | { id } | { ok } |
 | /api/remote-hosts/probe | POST | { id } | { ok, result: { status, latencyMs, tokenResolved, hasCookie } } |
@@ -164,6 +164,14 @@ No client plugin, no browser bundle, no build step: it is plain HTML injected by
 ```
 
 The token is a credential: keep the profile file at 0600 and never log it.
+
+Tuning keys live in the same config block:
+
+```yaml
+config:
+  upstreamTimeoutMs: 30000   # response-header timeout; expired requests answer 504
+  probeIntervalMs: 30000     # periodic health probe (GET /); 0 disables it
+```
 
 ## Transport
 

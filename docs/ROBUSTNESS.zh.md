@@ -14,7 +14,7 @@
 
 | 失效点 | 现象 | 检测方式 | 当前行为 | 恢复 |
 |---|---|---|---|---|
-| 后端 dsh 停止 | 隧道在、请求 ECONNREFUSED | 上游错误 | 502 + 状态点变红 + lastError | 后端恢复后自动可用 |
+| 后端 dsh 停止 | 隧道在、请求 ECONNREFUSED | 上游错误 + 周期探测 | 502 + 状态点变红 + lastError；探测把 health 置 offline | 后端恢复后自动可用 |
 | 后端 dsh 重启（token 变化） | 旧 Cookie 可能失效 → 401 | 401 | 清 cookie/token，经 ssh 重读 token 后重试一次 | 自动 |
 | ssh 断连 | 本地端口失联 | ssh 退出事件 | 指数退避重连（1s→30s），连续 3 次失败换端口 | 自动 |
 | 网络黑洞（TCP 建连但无响应） | 请求挂起 | 上游响应头超时 | **504**（默认 30s，可配） | 下次请求重试 |
@@ -28,7 +28,7 @@
 | store 损坏 | 远端清单丢失 | JSON 解析失败 | **备份为 .corrupt-<ts> 并从配置种子重建** | — |
 | 端口被占 | ssh -L 启动失败 | ssh 退出 + ExitOnForwardFailure | 换端口重试（最多 3 次后重新分配） | 自动 |
 | Hub 重启 | 全部隧道重建 | 启动流程 | 重新拉起隧道，Cookie 由 token 重新获取 | 自动（浏览器 Cookie 30 天，通常无感） |
-| Hub 被 SIGKILL | ssh 子进程可能残留 | — | 残留进程仍持有监听端口 | 下次启动换端口；建议用 systemd 控制组回收 |
+| Hub 被 SIGKILL | ssh 子进程可能残留 | 隧道注册表 | 启动时清扫：pid 仍存活且 cmdline 匹配的 ssh 被 SIGTERM/SIGKILL | 自动（依赖同一 PID 命名空间；建议 systemd 托管） |
 
 ## 2. 本轮加固的代码点
 
@@ -39,12 +39,18 @@
 - 上游流式中断（`upRes error`）时销毁响应，避免悬挂；
 - HTML 注入缓冲上限 4MB，超限切换为流式透传（放弃注入，但保证页面可用）；
 - 压缩安全：只要 `Accept` 可能是 HTML（为空、`*/*`、包含 `text/html`），就剥掉 `accept-encoding`；带 `content-encoding` 的响应一律不注入；
-- store 解析失败时先重命名为 `.corrupt-<timestamp>`，再从配置种子重建，避免静默丢数据。
+- store 解析失败时先重命名为 `.corrupt-<timestamp>`，再从配置种子重建，避免静默丢数据；
+- **主动健康探测**：`probeIntervalMs`（默认 30000，0 关闭）对每个远端做一次 `GET /`（200/401 视为可达），
+  记录 `health` / `latencyMs` / `lastProbeAt`，并参与 `state` 推导；探测有 5s 超时且不会与请求重复探测；
+- **隧道注册表 + 启动清扫**：子进程 pid/端口写入 `$DSH_HOME/remote-hub-tunnels.json`（0600），
+  正常退出/卸载时清除；Hub 启动先清扫上一进程遗留的、cmdline 匹配的 ssh；
+- **请求级指标**：每个远端累计 `requests / ok / errors / timeouts / avgLatencyMs / maxLatencyMs / lastRequestAt`，
+  通过 `/api/remote-hosts/list` 与 `/remotes/_status` 暴露（进程内，重启清零）。
 
 ## 3. 仍然存在的设计边界
 
-1. **直连 transport 不做主动探测**：状态由流量驱动，未访问前显示 `unknown`；要更准确需要定时 probe（成本更高）。
-2. **Hub 被强杀**时 ssh 子进程可能残留；systemd 的默认 `KillMode=control-group` 会回收整组进程，建议用 systemd 托管。
+1. **状态是近似值**：健康探测默认 30s 一次、顶栏 5s 轮询，不是实时事件；两次探测之间发生的故障最多滞后一个周期。
+2. **清扫依赖同一 PID 命名空间**：正常情况下 Hub 的多次启动共享系统 PID 空间；如果 Hub 跑在容器/独立命名空间里，pid 记录可能失效（此时靠 systemd 的 `KillMode=control-group` 回收整组进程）。
 3. **单用户模型**：所有浏览器共享 owner Peer；没有多用户隔离。
 4. **凭据**：内联 token 保存在 `~/.dsh/remote-hosts.json`（0600）；agent 文件同样是 0600。注意不要进日志/仓库。
 5. **iframe 同源**：同一 origin 下多个后端共享 localStorage（主题、宽度等偏好可能互相影响）。
@@ -61,8 +67,6 @@
 
 ## 5. 建议的后续（尚未实现）
 
-- 直连 transport 的 30s 主动健康探测，让状态点更准确；
-- 隧道子进程 pidfile + 启动清扫，解决强杀残留；
-- 请求级指标（成功率、P95 延迟、502/504 计数）与告警；
+- 指标的聚合/看板与告警（当前只有每远端的进程内计数）；
 - 后端不可用时给浏览器一个友好的降级页（而不是纯文本 502）；
 - 多 Hub 场景下的 store 一致性（目前是单机文件）。
