@@ -1,5 +1,7 @@
 # dsh-remote-hub
 
+> English | [中文](README.zh.md)
+
 Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and
 reverse-proxies every registered remote backend under `/remotes/<id>/`. The browser therefore
 only ever talks to the hub origin — which is what DSH's same-origin fences require
@@ -202,7 +204,11 @@ ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modul
 
 ## Roadmap
 
-- P1 auto-manage `ssh -L` per remote (port allocation, backoff, cleanup)
-- P2 agent plugin on every backend: publish `~/.dsh/remote-agent.json` so the hub can read the
-  current token over ssh instead of asking the user to paste it
-- P4 transport abstraction: `ssh-reverse` / websocket dial for when the hub is reachable
+- ✅ Reverse proxy (HTTP / WebSocket / SSE), auth gate, cookie isolation
+- ✅ Admin console + persistent store + owner-only API (list / save / remove / probe)
+- ✅ Per-remote `ssh -L` supervisor (port allocation, backoff, cleanup)
+- ✅ Agent plugin publishing `~/.dsh/remote-agent.json`; the hub reads the token over ssh
+- ✅ Sidebar switcher on the default UI
+- ⬜ Transport abstraction: `ssh-reverse` / WebSocket dial when the hub is reachable
+- ⬜ Optional client-side panel inside the dsh chrome
+- ⬜ Unified workspace/session list across backends

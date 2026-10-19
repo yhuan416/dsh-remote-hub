@@ -1,0 +1,204 @@
+# dsh-remote-hub
+
+> [English](README.md) | 中文
+
+Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
+反向代理到 `/remotes/<id>/` 下。因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 的同源限制
+所要求的（Host/Origin 必须一致、`SameSite=Strict` Cookie、全站没有 CORS）。
+
+传输方式刻意放在插件之外：一个远端只是一个 Hub 能访问的 HTTP 基址。这个地址可以来自手动 `ssh -L`、
+插件托管的 ssh 隧道，或未来某种 agent 通道——代理代码本身不变。
+
+## 当前状态
+
+P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
+
+| 检查项 | 结果 |
+|---|---|
+| 无 Hub Cookie 访问 `/remotes/` | 401 |
+| `/remotes/` 启动器（iframe 标签） | 200 |
+| `/remotes/<id>/` 远端首页 | 200，带自己的 `<base href="./">` |
+| `/remotes/<id>/assets/*` | 200 |
+| `/remotes/<id>/plugins/**` | 200 |
+| `POST /remotes/<id>/api/<ns>/<method>` | 200（真实 gateway 信封） |
+| `GET /remotes/<id>/plugins/events`（SSE） | 200 |
+| `Upgrade /remotes/<id>/api/remote.mux` | 101 |
+| 跨源 `Origin` | 403 |
+| 未知远端 | 404 |
+| 同时挂两个远端 | 均 200/101，各自的 boot 图互不干扰 |
+
+## 管理界面
+
+打开 `/remotes/`，点右上角 **管理**。页面由远端标签和一个小的管理台组成：
+
+- 远端表格：状态点、名称、传输方式、token 来源、最近一次错误；
+- 每行操作：**打开**（切换 iframe）/ **测试**（隧道 + token + HTTP 全链路探测）/ **删除**；
+- 添加表单：名称、传输方式（ssh 隧道 / 直连 upstream）、ssh host/user/port、远端端口、
+  本机端口（留空自动分配）、直连地址、token 来源（ssh 读 agent 文件 / 内联 / 无）；
+- 页面可见时每 5 秒轮询一次状态。
+
+保存**立即生效**：WS 升级路由当场注册、隧道当场启动、列表当场刷新——不需要重启 dsh。
+
+## 存储
+
+运行期配置存放在 `$DSH_HOME/remote-hosts.json`（0600，原子写）：
+
+```
+{
+  "version": 1,
+  "removed": ["old-id"],     // 墓碑：配置里的种子被删除后不会复活
+  "hosts": [ { "id": "...", "label": "...", "ssh": {...}, "tokenFile": {...} } ]
+}
+```
+
+- 首次启动：把 `cordis.patch.yml` 里的 `remotes` 数组导入 store；
+- 之后启动：store 是权威来源；配置里新增的 id 会被导入，除非被墓碑标记；
+- 在 UI 里删除会写入墓碑，因此配置里的种子不会重新出现。
+
+## 管理 API（owner-only，同源 Cookie）
+
+| 路由 | 方法 | 请求体 | 返回 |
+|---|---|---|---|
+| /api/remote-hosts/list | GET | — | 脱敏后的远端列表 + 隧道/token 状态 |
+| /api/remote-hosts/save | POST | label, transport, ssh{host,user,port}, remotePort, localPort, upstream, tokenMode, token, tokenPath | { ok, id } |
+| /api/remote-hosts/remove | POST | { id } | { ok } |
+| /api/remote-hosts/probe | POST | { id } | { ok, result: { status, latencyMs, tokenResolved, hasCookie } } |
+
+这些路由通过 `ctx.connection.fetch.register` 注册，框架会强制 owner Peer 与浏览器信任围栏。
+
+## 默认入口上的切换器
+
+插件通过官方 `webserver/index-inject` 钩子（`kind: "html"`，body 位置）向 Hub 自己的首页注入一个切换器：
+
+- 默认 `sidebar` 模式：一段内联脚本把下拉框插到侧边栏「新会话」按钮**正下方**
+  （通过 CSS Module 类名后缀 `_newSession` 定位），并用 MutationObserver 在 React 重渲染后
+  重新插回；侧边栏折叠时自动隐藏。找不到锚点时会退化为悬浮 pill。
+- 配置：
+
+```
+  config:
+    switcher:
+      mode: sidebar        # sidebar（默认）| floating
+      corner: bottom-right # 仅 floating 模式生效
+      offsetX: 14
+      offsetY: 14
+```
+- 内容：列出「本机」+ 每个远端（当前项高亮）以及「管理远端…」；链接带 `target="_top"`，
+  因此从启动器 iframe 里点也能切到外层窗口；
+- 它只出现在 Hub **已认证**的首页响应里——401 页面和被代理的远端页面都不会有，链接里也不含 token
+  （靠已有的 Hub Cookie 授权）；
+- 启动器页自带「← 本机」返回本地 UI。
+
+没有客户端插件、没有前端 bundle、没有构建步骤：只是宿主插件注入的一段纯 HTML。
+
+## 入口点
+
+- `/remotes/?token=<hub launch token>` —— 一次性入口：插件把 token 转交给 Hub 自己的 `/?token=`
+  交换流程、种下 Hub Cookie，然后 303 到干净的 `/remotes/`。
+  注意 token URL 与后续访问要使用**同一个主机名**（127.0.0.1 和 localhost 是两个 Cookie 域）。
+- `/remotes/` —— 启动器，每个远端一个 iframe 标签。
+- `/remotes/<id>/` —— 某个远端自己的 SPA（被代理）。
+- `/remotes/_status` —— JSON 诊断：每个远端的 `hasToken / hasCookie / lastError`。
+
+## 工作原理
+
+1. Hub 像普通 dsh 页面一样认证浏览器（自己的 token/Cookie）。
+2. 对每个远端，插件在**服务端**保存一份 Cookie：首次使用时由插件自己完成远端的
+   `GET /?token=<token>` 交换并缓存。浏览器永远看不到远端 token 和远端 Cookie。
+3. 转发请求时：
+   - 剥掉路径前缀（`/remotes/n100/api/x` → `/api/x`）；
+   - 把 `Host` 与 `Origin` 一起改写为上游 authority（如 `127.0.0.1:3182`），
+     远端的 Host/Origin 围栏会把它当作 loopback 放行；
+   - 带上缓存的服务端 Cookie。
+4. 因为每个远端在 Hub 上独占一个本地端口，改写后的 authority 天然唯一，上游铸出的 Cookie
+   不会互相覆盖——不需要重命名 Cookie。
+5. WebSocket 升级按远端逐条注册（exact 路由），然后 socket 对 socket 透传。
+
+## 配置
+
+```
+- insert:
+    - id: remote-hub
+      name: dsh-remote-hub
+      config:
+        remotes:
+          - id: n100                       # 仅 [A-Za-z0-9_-]+，唯一且稳定
+            label: yhuan@192.168.4.50
+            upstream: http://127.0.0.1:3182 # Hub 能访问到的地址
+            token: <远端 dsh 的 launch token> # 方案 A：内联（远端每次重启都会变）
+
+          - id: n100
+            upstream: http://127.0.0.1:3182
+            tokenFile:                       # 方案 B：自动读取 token
+              kind: ssh                      #   ssh | file
+              host: 192.168.4.50
+              user: yhuan
+              path: ~/.dsh/remote-agent.json #   由后端的 dsh-remote-agent 写入
+
+          - id: local2
+            upstream: http://127.0.0.1:3183
+            tokenFile: /home/yhuan/.dsh/remote-agent.json   # 方案 B，同机读文件
+```
+
+token 是凭据：profile 文件保持 0600，并且不要写进日志。
+
+## 传输方式
+
+每个远端二选一：
+
+```
+# A. Hub 已经能访问到它（手动 ssh -L、局域网、wg 等）
+- id: local2
+  upstream: http://127.0.0.1:3183
+
+# B. 由插件自己管理隧道
+- id: n100
+  ssh: { host: 192.168.4.50, user: yhuan }   # 可选：port、identityFile、proxyJump
+  remotePort: 3080                            # 远端 dsh 端口，默认 3080
+  # localPort: 32000                          # 可选；默认 32000 + 序号（稳定），
+                                              # 被占用时退回随机空闲端口
+```
+
+托管隧道的行为：
+
+- 启动 `ssh -N -L 127.0.0.1:<local>:127.0.0.1:<remotePort>`，参数包含
+  `BatchMode=yes ConnectTimeout=8 ExitOnForwardFailure=yes ServerAliveInterval=15 StrictHostKeyChecking=accept-new`；
+- 最多等 8 秒确认本地端口可连接，然后标记 `tunnel.state=up`；
+- 进程退出后按指数退避重连（1s → 30s）；连续失败 3 次会重新分配本地端口（除非显式配置了 `localPort`）；
+- 插件卸载时杀掉子进程，不留下孤儿 `ssh`，也不泄漏监听端口；
+- 隧道不可用时，`/remotes/<id>/...` 返回 502，并带上最后一次 ssh 错误。
+
+## 手动传输（第一步）
+
+```
+# 在远端
+dsh web --no-open --port 3080          # 会打印 http://127.0.0.1:3080/?token=...
+
+# 在 Hub 上
+ssh -N -L 3182:127.0.0.1:3080 yhuan@192.168.4.50
+
+# 再把远端 token 填进 config.remotes[].token
+```
+
+## 安装到 profile
+
+```
+# 1) 让 profile 能解析到这个插件
+ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/node_modules/dsh-remote-hub
+ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modules/dsh-remote-hub
+
+# 2) 把上面的 insert 行追加到 ~/.dsh/profiles/web/cordis.patch.yml
+
+# 3) 重启 dsh web（GUI 重新连接即可）
+```
+
+## 路线图
+
+- ✅ 反向代理（HTTP / WebSocket / SSE）、鉴权门、Cookie 隔离
+- ✅ 管理台 + 持久化 store + owner-only API（list / save / remove / probe）
+- ✅ 每个远端的 ssh 隧道托管（端口分配、退避重连、清理）
+- ✅ 后端 agent 插件：发布 `~/.dsh/remote-agent.json`，Hub 经 ssh 读取 token
+- ✅ 默认入口的侧边栏切换器
+- ⬜ 传输抽象：`ssh-reverse` / WebSocket 拨号（当 Hub 可被拨入时）
+- ⬜ 可选的客户端插件面板（嵌进 dsh 自身 UI）
+- ⬜ 跨后端的统一工作区/会话列表
