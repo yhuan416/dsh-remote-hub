@@ -1,0 +1,32 @@
+{
+  "name": "dsh-remote-hub",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Hub-side DSH host plugin: reverse-proxies multiple dsh web backends under /remotes/<id>/, manages their ssh -L tunnels, resolves launch tokens, and ships an admin UI.",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js"
+  },
+  "files": [
+    "lib/index.js",
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "remote",
+    "ssh"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

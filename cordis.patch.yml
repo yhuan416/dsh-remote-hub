@@ -1,0 +1,6 @@
+# dsh-remote-hub bundle patch: inserts the hub router row into the web profile.
+- insert:
+    - id: remote-hub
+      name: dsh-remote-hub
+      config:
+        remotes: []          # see README: id / label / upstream / token
