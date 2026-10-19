@@ -69,6 +69,19 @@ Runtime configuration lives in `$DSH_HOME/remote-hosts.json` (0600, atomic write
 These routes are registered through `ctx.connection.fetch.register`, so the framework enforces
 the owner Peer and the browser trust fence for them.
 
+## Entry link on the default UI
+
+The plugin injects one floating pill into the hub's own index page via the official
+`webserver/index-inject` hook (`kind: "html"`, body placement):
+
+- position: fixed, bottom-right; text: "⇄ 远端后端"; `href="/remotes/"`
+- it only ever appears on the hub's authenticated index response — the 401 page and proxied
+  remote pages never contain it, and no token is embedded in the link (the hub cookie already
+  authorizes it);
+- the launcher page carries a "← 本机" link back to the local UI.
+
+No client plugin, no browser bundle, no build step: it is plain HTML injected by the host plugin.
+
 ## Entry points
 
 - `/remotes/?token=<hub launch token>` — one-shot entry: the plugin relays the token to the
