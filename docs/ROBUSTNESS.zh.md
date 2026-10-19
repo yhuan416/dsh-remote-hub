@@ -44,6 +44,9 @@
   记录 `health` / `latencyMs` / `lastProbeAt`，并参与 `state` 推导；探测有 5s 超时且不会与请求重复探测；
 - **隧道注册表 + 启动清扫**：子进程 pid/端口写入 `$DSH_HOME/remote-hub-tunnels.json`（0600），
   正常退出/卸载时清除；Hub 启动先清扫上一进程遗留的、cmdline 匹配的 ssh；
+- **恢复语义**：成功的探测或成功转发的响应都会把 `health` 置回 online 并清掉 `lastError`；
+  上游连接失败/超时置 offline；隧道重新 up 时清空过期 health 并立即触发一次探测。
+  因此"从红变绿"最多滞后一个探测周期（默认 30s），有真实流量时即时恢复。
 - **请求级指标**：每个远端累计 `requests / ok / errors / timeouts / avgLatencyMs / maxLatencyMs / lastRequestAt`，
   通过 `/api/remote-hosts/list` 与 `/remotes/_status` 暴露（进程内，重启清零）。
 
