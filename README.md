@@ -74,12 +74,19 @@ the owner Peer and the browser trust fence for them.
 The plugin injects one floating pill into the hub's own index page via the official
 `webserver/index-inject` hook (`kind: "html"`, body placement):
 
-- position: top-left by default, anchored to the live sidebar width (read from the shell's
-  grid columns, so it follows collapse and resize); a config block moves it:
+- default mode `sidebar`: an inline script inserts a dropdown directly below the sidebar's
+  "new session" control (matched by its CSS-module name suffix `_newSession`) and keeps it
+  there across re-renders with a MutationObserver; hidden while the sidebar is collapsed. If the
+  anchor cannot be found it falls back to a floating pill.
+- config:
 
   ```yaml
   config:
-    switcher: { corner: top-left, offsetX: 10, offsetY: 8 }   # or corner: bottom-right
+    switcher:
+      mode: sidebar        # sidebar (default) | floating
+      corner: bottom-right # floating mode only
+      offsetX: 14
+      offsetY: 14
   ```
 - content: a dropdown listing 本机 + every remote (current one highlighted) and a "管理远端…"
   link; links carry `target="_top"` so they work from inside the launcher iframes;
