@@ -93,7 +93,11 @@ The plugin injects one floating pill into the hub's own index page via the offic
       offsetY: 14
   ```
 - content: a dropdown listing 本机 + every remote (current one highlighted) and a "管理远端…"
-  link; links carry `target="_top"` so they work from inside the launcher iframes;
+  link;
+- picking a remote opens a **fullscreen overlay with that backend in an iframe**, so switching never
+  reloads the page you are on; iframes stay mounted once opened and switching between backends is
+  instant. 本机 / 关闭 / Escape hide the overlay; a remote page rendered inside the overlay posts a
+  message to the parent instead of navigating the top window;
 - it only ever appears on the hub's authenticated index response — the 401 page and proxied
   remote pages never contain it, and no token is embedded in the link (the hub cookie already
   authorizes it);
