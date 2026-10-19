@@ -28,8 +28,10 @@ for (const marker of ['id="rows"', 'id="save"', 'id="manage"', 'api("list")']) {
 const pageBytes = parseInline(page, 'launcher page')
 
 const switcher = switcherMarkup([{ id: 'demo', label: 'demo' }], 'local', undefined)
-if (!switcher.includes('dsh-hub-switch-data')) throw new Error('switcher payload holder is missing')
-if (!switcher.includes('_newSession')) throw new Error('switcher does not target the sidebar anchor')
+for (const marker of ['dsh-hub-switch-data', '_newSession', 'dsh-hub-bar', 'dsh-hub-pane', 'padding-top:34px', 'postMessage']) {
+  if (!switcher.includes(marker)) throw new Error('switcher is missing ' + marker)
+}
+if (!switcher.includes('if(!framed)build()')) throw new Error('switcher must not build the bar inside an iframe')
 const switcherBytes = parseInline(switcher, 'switcher')
 
 console.log('launcher ok (' + String(pageBytes) + ' bytes), switcher ok (' + String(switcherBytes) + ' bytes)')

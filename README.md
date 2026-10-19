@@ -78,10 +78,13 @@ the owner Peer and the browser trust fence for them.
 The plugin injects one floating pill into the hub's own index page via the official
 `webserver/index-inject` hook (`kind: "html"`, body placement):
 
-- default mode `sidebar`: an inline script inserts a dropdown directly below the sidebar's
-  "new session" control (matched by its CSS-module name suffix `_newSession`) and keeps it
-  there across re-renders with a MutationObserver; hidden while the sidebar is collapsed. If the
-  anchor cannot be found it falls back to a floating pill.
+- default mode `bar`: a persistent top bar lists 本机 + every remote. Picking a remote shows
+  that backend in an iframe below the bar (mounted once, kept alive); 本机 hides the pane again
+  and reveals the **same** local page — never a reload. The bar reserves 34px through
+  `body{padding-top}` so the app layout does not shift.
+- the script also inserts a dropdown below the sidebar's "new session" control (matched by its
+  CSS-module name suffix `_newSession`) as a second entry; hidden while the sidebar is collapsed.
+  If the anchor cannot be found it falls back to a floating pill.
 - config:
 
   ```yaml
