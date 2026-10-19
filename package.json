@@ -6,12 +6,16 @@
   "description": "Hub-side DSH host plugin: reverse-proxies multiple dsh web backends under /remotes/<id>/, manages their ssh -L tunnels, resolves launch tokens, and ships an admin UI.",
   "main": "lib/index.js",
   "exports": {
-    ".": "./lib/index.js"
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js"
   },
   "files": [
     "lib/index.js",
+    "lib/client.js",
     "cordis.patch.yml",
-    "README.md"
+    "README.md",
+    "README.zh.md",
+    "docs"
   ],
   "engines": {
     "node": ">=22.19.0"
@@ -27,6 +31,12 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
+      ]
     }
   },
   "scripts": {

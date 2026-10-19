@@ -22,10 +22,10 @@ function parseInline(html, label) {
 }
 
 const page = launcherPage([{ id: 'demo', label: 'demo' }])
-for (const marker of ['id="rows"', 'id="save"', 'id="manage"', 'api("list")']) {
+for (const marker of ['/remotes/demo/', '/remotes/_status', '回到本机']) {
   if (!page.includes(marker)) throw new Error('launcher page is missing ' + marker)
 }
-const pageBytes = parseInline(page, 'launcher page')
+const pageBytes = page.includes('<script>') ? parseInline(page, 'launcher page') : page.length
 
 const switcher = switcherMarkup([{ id: 'demo', label: 'demo' }], 'local', undefined)
 for (const marker of ['dsh-hub-switch-data', 'dsh-hub-bar', 'dsh-hub-pane', 'padding-top:34px', 'postMessage', '--dsw-alias-bg-base', 'dropdown']) {

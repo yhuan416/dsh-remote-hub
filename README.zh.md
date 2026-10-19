@@ -18,7 +18,7 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 | 检查项 | 结果 |
 |---|---|
 | 无 Hub Cookie 访问 `/remotes/` | 401 |
-| `/remotes/` 启动器（iframe 标签） | 200 |
+| `/remotes/` 兜底入口页 | 200 |
 | `/remotes/<id>/` 远端首页 | 200，带自己的 `<base href="./">` |
 | `/remotes/<id>/assets/*` | 200 |
 | `/remotes/<id>/plugins/**` | 200 |
@@ -31,15 +31,14 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 
 ## 管理界面
 
-打开 `/remotes/`，点右上角 **管理**。页面由远端标签和一个小的管理台组成：
+远端管理已并入统一的 **Plugins** 页面：**设置 → 插件 → dsh-remote-hub**（该插件的详情页）。插件在那里贡献两块内容：
 
-- 远端表格：状态点、名称、传输方式、token 来源、最近一次错误；
-- 每行操作：**打开**（切换 iframe）/ **测试**（隧道 + token + HTTP 全链路探测）/ **删除**；
-- 添加表单：名称、传输方式（ssh 隧道 / 直连 upstream）、ssh host/user/port、远端端口、
-  本机端口（留空自动分配）、直连地址、token 来源（ssh 读 agent 文件 / 内联 / 无）；
-- 页面可见时每 5 秒轮询一次状态。
+- 由导出的 `Config` 生成的**配置表单**：`upstreamTimeoutMs`、`probeIntervalMs`、`switcher.mode`、`switcher.dropdown`；
+- **远端链路**区块（`plugins.detail.section`，由手写客户端 bundle `lib/client.js` 注册）：
+  远端表格（状态点 / 名称 / 传输 / token 来源 / 延迟 / 最近错误）、每行 **打开 / 测试 / 删除**、
+  以及添加表单（名称、ssh host、user、远端端口）。
 
-保存**立即生效**：WS 升级路由当场注册、隧道当场启动、列表当场刷新——不需要重启 dsh。
+`/remotes/` 现在只是**兜底入口页**（纯链接，不再有管理台）；`/api/remote-hosts/*` 仍是插件页区块使用的 API。
 
 ## 存储
 
@@ -102,14 +101,15 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
   （靠已有的 Hub Cookie 授权）；
 - 启动器页自带「← 本机」返回本地 UI。
 
-没有客户端插件、没有前端 bundle、没有构建步骤：只是宿主插件注入的一段纯 HTML。
+顶栏是宿主插件注入的纯 HTML；远端管理用一段手写的客户端 bundle（`lib/client.js`，通过 `dsh.client` 声明），
+只做 Plugins 页区块注册——两边都不需要构建步骤。
 
 ## 入口点
 
 - `/remotes/?token=<hub launch token>` —— 一次性入口：插件把 token 转交给 Hub 自己的 `/?token=`
   交换流程、种下 Hub Cookie，然后 303 到干净的 `/remotes/`。
   注意 token URL 与后续访问要使用**同一个主机名**（127.0.0.1 和 localhost 是两个 Cookie 域）。
-- `/remotes/` —— 启动器，每个远端一个 iframe 标签。
+- `/remotes/` —— 兜底入口页（纯链接）；管理已迁到 Plugins 页。
 - `/remotes/<id>/` —— 某个远端自己的 SPA（被代理）。
 - `/remotes/_status` —— JSON 诊断：每个远端的 `hasToken / hasCookie / lastError`。
 
@@ -221,5 +221,5 @@ ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modul
 - ✅ 后端 agent 插件：发布 `~/.dsh/remote-agent.json`，Hub 经 ssh 读取 token
 - ✅ 默认入口的侧边栏切换器
 - ⬜ 传输抽象：`ssh-reverse` / WebSocket 拨号（当 Hub 可被拨入时）
-- ⬜ 可选的客户端插件面板（嵌进 dsh 自身 UI）
+- ✅ 客户端半：Plugins 页「远端链路」区块 + 生成的配置表单
 - ⬜ 跨后端的统一工作区/会话列表

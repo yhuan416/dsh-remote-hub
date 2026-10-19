@@ -21,7 +21,7 @@ P0, validated end-to-end against a real remote over `ssh -L`:
 | Check | Result |
 |---|---|
 | `/remotes/` without the hub cookie | 401 |
-| `/remotes/` launcher (iframe tabs) | 200 |
+| `/remotes/` fallback entry page | 200 |
 | `/remotes/<id>/` remote index | 200, own `<base href="./">` |
 | `/remotes/<id>/assets/*` | 200 |
 | `/remotes/<id>/plugins/**` | 200 |
@@ -34,17 +34,17 @@ P0, validated end-to-end against a real remote over `ssh -L`:
 
 ## Management UI
 
-Open `/remotes/` and click **管理** (top right). The page is a small admin console plus the
-remote tabs:
+Remote management lives in the unified **Plugins** page: **Settings → Plugins → dsh-remote-hub**
+(the plugin's detail page). The plugin contributes two pieces there:
 
-- table of remotes: status dot, label, transport, token source, last error;
-- actions per row: **打开** (switch the iframe) / **测试** (probe: tunnel + token + HTTP) / **删除**;
-- form: label, transport (ssh tunnel or direct upstream), ssh host/user/port, remote port,
-  local port (blank = auto), upstream URL, token source (ssh agent file / inline / none);
-- polling every 5s while the page is visible.
+- a generated **configuration form** (from its exported `Config`): `upstreamTimeoutMs`,
+  `probeIntervalMs`, `switcher.mode`, `switcher.dropdown`;
+- a **远端链路** section (`plugins.detail.section`, registered by the hand-written client bundle
+  `lib/client.js`): table of remotes with state dot / label / transport / token source / latency
+  / last error, per-row **打开 / 测试 / 删除**, and an add form (label, ssh host, user, remote port).
 
-Saving takes effect immediately: the upgrade route is registered, the tunnel starts, and the
-list refreshes — no dsh restart.
+`/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
+remains the API behind the Plugins section.
 
 ## Store
 
@@ -111,14 +111,16 @@ The plugin injects one floating pill into the hub's own index page via the offic
   authorizes it);
 - the launcher page carries a "← 本机" link back to the local UI.
 
-No client plugin, no browser bundle, no build step: it is plain HTML injected by the host plugin.
+The top bar is plain HTML injected by the host plugin. Remote management uses a hand-written
+client bundle (`lib/client.js`, declared through `dsh.client`) that only registers a Plugins-page
+section — no build step for either half.
 
 ## Entry points
 
 - `/remotes/?token=<hub launch token>` — one-shot entry: the plugin relays the token to the
   hub's own `/?token=` exchange, sets the hub cookie, then 303s to the clean `/remotes/`.
   Use the **same hostname** you used in the token URL (127.0.0.1 vs localhost are different cookie hosts).
-- `/remotes/` — launcher with one iframe per remote (tabs).
+- `/remotes/` — fallback entry page (plain links); management moved to the Plugins page.
 - `/remotes/<id>/` — a remote's own SPA, proxied.
 - `/remotes/_status` — JSON diagnostics: per remote `hasToken / hasCookie / lastError`.
 
@@ -232,5 +234,5 @@ ln -s /home/yhuan/workspace/gitlab/dsh-remote-hub ~/.dsh/profiles/web/node_modul
 - ✅ Agent plugin publishing `~/.dsh/remote-agent.json`; the hub reads the token over ssh
 - ✅ Sidebar switcher on the default UI
 - ⬜ Transport abstraction: `ssh-reverse` / WebSocket dial when the hub is reachable
-- ⬜ Optional client-side panel inside the dsh chrome
+- ✅ Client half: Plugins-page section (远端链路) + generated config form
 - ⬜ Unified workspace/session list across backends
