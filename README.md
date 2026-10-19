@@ -1,6 +1,8 @@
 # dsh-remote-hub
 
 > English | [中文](README.zh.md)
+>
+> Deployment guide (Chinese): [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)
 
 Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and
 reverse-proxies every registered remote backend under `/remotes/<id>/`. The browser therefore
