@@ -28,5 +28,8 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "scripts": {
+    "check": "node scripts/check-launcher.mjs"
   }
 }
