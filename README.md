@@ -82,9 +82,10 @@ The plugin injects one floating pill into the hub's own index page via the offic
   that backend in an iframe below the bar (mounted once, kept alive); 本机 hides the pane again
   and reveals the **same** local page — never a reload. The bar reserves 34px through
   `body{padding-top}` so the app layout does not shift.
-- the script also inserts a dropdown below the sidebar's "new session" control (matched by its
-  CSS-module name suffix `_newSession`) as a second entry; hidden while the sidebar is collapsed.
-  If the anchor cannot be found it falls back to a floating pill.
+- colors come from the app's own theme tokens (`--dsw-alias-bg-base`, `--dsw-alias-label-primary`,
+  `--dsw-alias-border-l2`, `--dsw-alias-interactive-bg-*`), so the bar follows light/dark mode.
+- the sidebar dropdown below the "new session" control is **off by default** now that the bar is
+  always visible; set `switcher.dropdown: true` to re-enable it (it uses the same theme tokens).
 - config:
 
   ```yaml

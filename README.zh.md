@@ -75,6 +75,9 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 - 默认 `bar` 模式：顶部**常驻切换栏**，列出「本机」+ 每个远端。选中远端后，栏下方用 iframe
   显示该后端（只挂载一次、之后保持）；点「本机」只是隐藏 iframe，露出**同一个**本地页面——
   **不会重载**。切换栏通过 `body{padding-top:34px}` 占位，应用排版不跳动。
+- 配色使用应用自己的主题变量（`--dsw-alias-bg-base`、`--dsw-alias-label-primary`、
+  `--dsw-alias-border-l2`、`--dsw-alias-interactive-bg-*`），因此跟随明暗主题，不再出现夜间模式下的白块。
+- 顶栏常驻后，侧边栏「新会话」下方的下拉框**默认关闭**；需要时用 `switcher.dropdown: true` 打开。
 - 同时会插入侧边栏「新会话」按钮**正下方**的下拉框（作为第二个入口）
   （通过 CSS Module 类名后缀 `_newSession` 定位），并用 MutationObserver 在 React 重渲染后
   重新插回；侧边栏折叠时自动隐藏。找不到锚点时会退化为悬浮 pill。
