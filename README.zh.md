@@ -77,6 +77,8 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
   **不会重载**。切换栏通过 `body{padding-top:34px}` 占位，应用排版不跳动。
 - 配色使用应用自己的主题变量（`--dsw-alias-bg-base`、`--dsw-alias-label-primary`、
   `--dsw-alias-border-l2`、`--dsw-alias-interactive-bg-*`），因此跟随明暗主题，不再出现夜间模式下的白块。
+- 每个远端标签前有**状态点**，每 5 秒从 `/api/remote-hosts/list` 轮询：
+  绿=online、黄=pending/启动中、红=offline、灰=unknown；悬停可看到 state / 隧道状态 / 最近错误。
 - 顶栏常驻后，侧边栏「新会话」下方的下拉框**默认关闭**；需要时用 `switcher.dropdown: true` 打开。
 - 同时会插入侧边栏「新会话」按钮**正下方**的下拉框（作为第二个入口）
   （通过 CSS Module 类名后缀 `_newSession` 定位），并用 MutationObserver 在 React 重渲染后

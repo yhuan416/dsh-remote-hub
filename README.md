@@ -84,6 +84,9 @@ The plugin injects one floating pill into the hub's own index page via the offic
   `body{padding-top}` so the app layout does not shift.
 - colors come from the app's own theme tokens (`--dsw-alias-bg-base`, `--dsw-alias-label-primary`,
   `--dsw-alias-border-l2`, `--dsw-alias-interactive-bg-*`), so the bar follows light/dark mode.
+- every remote tab carries a status dot polled from `/api/remote-hosts/list` every 5s:
+  green online, amber pending/starting, red offline, grey unknown; hovering shows
+  state / tunnel state / last error.
 - the sidebar dropdown below the "new session" control is **off by default** now that the bar is
   always visible; set `switcher.dropdown: true` to re-enable it (it uses the same theme tokens).
 - config:
