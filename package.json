@@ -31,5 +31,13 @@
   },
   "scripts": {
     "check": "node scripts/check-launcher.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yhuan416/dsh-remote-hub.git"
+  },
+  "homepage": "https://github.com/yhuan416/dsh-remote-hub#readme",
+  "bugs": {
+    "url": "https://github.com/yhuan416/dsh-remote-hub/issues"
   }
 }
