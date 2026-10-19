@@ -74,7 +74,15 @@ the owner Peer and the browser trust fence for them.
 The plugin injects one floating pill into the hub's own index page via the official
 `webserver/index-inject` hook (`kind: "html"`, body placement):
 
-- position: fixed, bottom-right; text: "⇄ 远端后端"; `href="/remotes/"`
+- position: top-left by default, anchored to the live sidebar width (read from the shell's
+  grid columns, so it follows collapse and resize); a config block moves it:
+
+  ```yaml
+  config:
+    switcher: { corner: top-left, offsetX: 10, offsetY: 8 }   # or corner: bottom-right
+  ```
+- content: a dropdown listing 本机 + every remote (current one highlighted) and a "管理远端…"
+  link; links carry `target="_top"` so they work from inside the launcher iframes;
 - it only ever appears on the hub's authenticated index response — the 401 page and proxied
   remote pages never contain it, and no token is embedded in the link (the hub cookie already
   authorizes it);
