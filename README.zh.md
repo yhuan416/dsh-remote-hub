@@ -38,6 +38,8 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
   远端表格（状态点 / 名称 / 传输 / token 来源 / 延迟 / 最近错误）、每行 **打开 / 测试 / 删除**、
   添加表单（名称、ssh host、user、远端端口），以及 **远端工作区** 列表：聚合所有后端的工作区与会话
   （ssh 读 workspace store + `session/list` RPC；store 读不到时按 cwd 分组）。
+  同一棵树也会**注入到侧边栏**（footer 上方；侧边栏收起时隐藏），方便像本地工作区一样使用；
+  React 重渲染后会自动重新插入。
   点会话会打开顶栏里的该后端，并向 iframe 发送 `{type:'dsh-hub-open-session', sessionId}`，
   远端页面的客户端半调用 `uiWorkspace.openSession()`（带重试与 ack；失败时退回后端首页）。
 
