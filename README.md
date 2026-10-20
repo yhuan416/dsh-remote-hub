@@ -44,6 +44,9 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
   / last error, per-row **打开 / 测试 / 删除**, an add form (label, ssh host, user, remote port),
   and a **远端工作区** list: every backend's workspaces and sessions aggregated by the Hub
   (workspace store over ssh + `session/list` RPC; cwd grouping when the store is unreadable).
+  Clicking a session opens that backend in the top-bar pane and sends
+  `{type:'dsh-hub-open-session', sessionId}` to the framed page, whose client half calls
+  `uiWorkspace.openSession()` (retried until acked; falls back to the backend's home page).
 
 `/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
 remains the API behind the Plugins section.

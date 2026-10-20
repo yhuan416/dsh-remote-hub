@@ -38,6 +38,8 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
   远端表格（状态点 / 名称 / 传输 / token 来源 / 延迟 / 最近错误）、每行 **打开 / 测试 / 删除**、
   添加表单（名称、ssh host、user、远端端口），以及 **远端工作区** 列表：聚合所有后端的工作区与会话
   （ssh 读 workspace store + `session/list` RPC；store 读不到时按 cwd 分组）。
+  点会话会打开顶栏里的该后端，并向 iframe 发送 `{type:'dsh-hub-open-session', sessionId}`，
+  远端页面的客户端半调用 `uiWorkspace.openSession()`（带重试与 ack；失败时退回后端首页）。
 
 `/remotes/` 现在只是**兜底入口页**（纯链接，不再有管理台）；`/api/remote-hosts/*` 仍是插件页区块使用的 API。
 
