@@ -36,7 +36,8 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 - 由导出的 `Config` 生成的**配置表单**：`upstreamTimeoutMs`、`probeIntervalMs`、`switcher.mode`、`switcher.dropdown`；
 - **远端链路**区块（`plugins.detail.section`，由手写客户端 bundle `lib/client.js` 注册）：
   远端表格（状态点 / 名称 / 传输 / token 来源 / 延迟 / 最近错误）、每行 **打开 / 测试 / 删除**、
-  以及添加表单（名称、ssh host、user、远端端口）。
+  添加表单（名称、ssh host、user、远端端口），以及 **远端工作区** 列表：聚合所有后端的工作区与会话
+  （ssh 读 workspace store + `session/list` RPC；store 读不到时按 cwd 分组）。
 
 `/remotes/` 现在只是**兜底入口页**（纯链接，不再有管理台）；`/api/remote-hosts/*` 仍是插件页区块使用的 API。
 
@@ -63,6 +64,7 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 | /api/remote-hosts/list | GET | — | 脱敏后的远端列表 + 隧道/token 状态 |
 | /api/remote-hosts/save | POST | label, transport, ssh{host,user,port}, remotePort, localPort, upstream, tokenMode, token, tokenPath | { ok, id } |
 | /api/remote-hosts/remove | POST | { id } | { ok } |
+| /api/remote-hosts/workspaces | GET | — | 每个远端的 workspaces[{id,title,path,sessions[]}] + orphans；ssh 读后端 workspace store，直连按 cwd 分组 |
 | /api/remote-hosts/probe | POST | { id } | { ok, result: { status, latencyMs, tokenResolved, hasCookie } } |
 
 这些路由通过 `ctx.connection.fetch.register` 注册，框架会强制 owner Peer 与浏览器信任围栏。

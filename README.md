@@ -41,7 +41,9 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
   `probeIntervalMs`, `switcher.mode`, `switcher.dropdown`;
 - a **远端链路** section (`plugins.detail.section`, registered by the hand-written client bundle
   `lib/client.js`): table of remotes with state dot / label / transport / token source / latency
-  / last error, per-row **打开 / 测试 / 删除**, and an add form (label, ssh host, user, remote port).
+  / last error, per-row **打开 / 测试 / 删除**, an add form (label, ssh host, user, remote port),
+  and a **远端工作区** list: every backend's workspaces and sessions aggregated by the Hub
+  (workspace store over ssh + `session/list` RPC; cwd grouping when the store is unreadable).
 
 `/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
 remains the API behind the Plugins section.
@@ -70,6 +72,7 @@ Runtime configuration lives in `$DSH_HOME/remote-hosts.json` (0600, atomic write
 | /api/remote-hosts/save | POST | label, transport, ssh{host,user,port}, remotePort, localPort, upstream, tokenMode, token, tokenPath | { ok, id } |
 | /api/remote-hosts/remove | POST | { id } | { ok } |
 | /api/remote-hosts/probe | POST | { id } | { ok, result: { status, latencyMs, tokenResolved, hasCookie } } |
+| /api/remote-hosts/workspaces | GET | — | per remote: workspaces[{id,title,path,sessions[]}] + orphans; ssh reads the backend workspace store, direct groups by cwd |
 
 These routes are registered through `ctx.connection.fetch.register`, so the framework enforces
 the owner Peer and the browser trust fence for them.
