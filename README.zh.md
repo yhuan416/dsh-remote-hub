@@ -40,9 +40,6 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
   （ssh 读 workspace store + `session/list` RPC；store 读不到时按 cwd 分组）。
   同一棵树也会**注入到侧边栏**（footer 上方；侧边栏收起时隐藏），方便像本地工作区一样使用；
   React 重渲染后会自动重新插入。
-- 一个 **工作区** 页面（`main` keyed slot `remote-workspaces` + `sidebar.panellist` 图标）：
-  把本地工作区/会话（走 `useWorkspaces`/`useSessions`）和所有远端的树混在一个页面里；
-  点本地会话直接在对话区打开，点远端会话打开顶栏 pane 并深链到该会话；「← 对话」返回对话。
   点会话会打开顶栏里的该后端，并向 iframe 发送 `{type:'dsh-hub-open-session', sessionId}`，
   远端页面的客户端半调用 `uiWorkspace.openSession()`（带重试与 ack；失败时退回后端首页）。
 

@@ -47,10 +47,6 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
   The same tree is also injected **into the sidebar** (above the footer, hidden while the
   sidebar is collapsed) so remote workspaces can be used where local ones live; it re-inserts
   itself after React re-renders.
-- a **工作区** page (`main` keyed slot `remote-workspaces` + a `sidebar.panellist` icon) that mixes
-  the local workspaces/sessions (via `useWorkspaces`/`useSessions`) with every remote's tree;
-  clicking a local session opens it in the conversation, a remote one opens the top-bar pane
-  at that session. "← 对话" returns to the conversation.
   Clicking a session opens that backend in the top-bar pane and sends
   `{type:'dsh-hub-open-session', sessionId}` to the framed page, whose client half calls
   `uiWorkspace.openSession()` (retried until acked; falls back to the backend's home page).
