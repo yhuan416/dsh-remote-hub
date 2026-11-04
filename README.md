@@ -51,6 +51,25 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
 `/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
 remains the API behind the Plugins section.
 
+### OpenCode remotes (prototype)
+
+Independent of dsh remotes, the plugin can treat **opencode servers** as another kind of remote:
+declare them in config and the Plugins section lists their projects/sessions, can create a session,
+and embeds the session's own opencode UI:
+
+```yaml
+config:
+  opencode:
+    - id: local-oc
+      label: 本地 opencode
+      url: http://127.0.0.1:4096   # opencode serve --port 4096
+      # password: ...             # optional, OPENCODE_SERVER_PASSWORD (Basic auth)
+```
+
+Endpoints: `GET /api/opencode/list`, `POST /api/opencode/session`. Deep links use
+`<url>/session/<id>`. The browser must be able to reach the server URL (same machine as the Hub, or
+a local ssh tunnel); a remote opencode server needs `ssh -L` for now.
+
 ## Store
 
 Runtime configuration lives in `$DSH_HOME/remote-hosts.json` (0600, atomic write):
