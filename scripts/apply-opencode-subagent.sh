@@ -64,6 +64,7 @@ const block = [
   '      name: "@deepseek-ai/dsh-tool-subagent"',
   '      config:',
   '        provider: opencode-n100',
+  '        maxDepth: provider-managed',
   '        toolName: subagent_n100',
   '',
 ].join('\n')

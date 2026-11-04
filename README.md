@@ -287,6 +287,7 @@ dsh-remote-hub can register a remote `opencode serve` instance as a dsh subagent
       name: "@deepseek-ai/dsh-tool-subagent"
       config:
         provider: opencode-n100
+        maxDepth: provider-managed
         toolName: subagent_n100
 ```
 
