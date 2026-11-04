@@ -264,3 +264,37 @@ Management lives in **Settings → Plugins → Installed plugins → dsh-remote-
 - ⬜ Transport abstraction: `ssh-reverse` / WebSocket dial when the hub is reachable
 - ✅ Client half: Plugins-page section (远端链路) + generated config form
 - ⬜ Unified workspace/session list across backends
+
+## Remote OpenCode as a native subagent
+
+dsh-remote-hub can register a remote `opencode serve` instance as a dsh subagent backend
+(HTTP/ip:port only; the deployment of the opencode service is independent).
+
+```yaml
+- id: remote-hub
+  config:
+    opencode:
+      - id: n100
+        label: n100 opencode
+        url: http://192.168.4.50:4096
+        # password: ...            # optional, OPENCODE_SERVER_PASSWORD
+    # opencodePermission: reject # default: auto-allow
+    # opencodePathMap:           # when local and remote layouts differ
+    #   - { from: /home/yhuan, to: /home/yhuan }
+
+- insert:
+    - id: tool-opencode-n100
+      name: "@deepseek-ai/dsh-tool-subagent"
+      config:
+        provider: opencode-n100
+        toolName: subagent_n100
+```
+
+For an already installed profile, the helper script updates the plugin and patches the profile:
+
+```sh
+bash scripts/apply-opencode-subagent.sh [opencode-url]
+```
+
+The synchronous one-shot delegation tool `opencode_delegate` remains available; it accepts an
+optional `session` id to continue an earlier remote session.
