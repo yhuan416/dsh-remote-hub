@@ -1,7 +1,8 @@
 # Architecture
 
-> Deployment: [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) · Robustness: [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
-> Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md) · Changelog: [CHANGELOG.md](CHANGELOG.md)
+> Deployment: [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) · Chinese overview: [docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md)
+> Robustness: [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md) · Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
+> Changelog: [CHANGELOG.md](CHANGELOG.md)
 
 ## Goal
 
@@ -15,15 +16,52 @@ native local sessions. The hub is a proxy + supervisor + small admin surface.
 
 ## Topology
 
-```text
-browser ── same-origin ──► hub dsh web (3080)
-                            │  /remotes/<id>/*  (HTTP, WS, SSE)
-                            │  /api/remote-hosts/* (admin, hub cookie)
-                            ▼
-                     managed ssh -L tunnel (one local port per remote)
-                            ▼
-                     remote dsh web (127.0.0.1:3080)
+```mermaid
+flowchart LR
+  B["Browser<br/>hub origin only"]
+
+  subgraph HUB["Hub process :3080"]
+    WEB["dsh web"]
+    HUBPLUG["dsh-remote-hub<br/>host plugin"]
+    ADMIN["/api/remote-hosts/*<br/>list/save/remove/probe<br/>workspaces / session create+prompt"]
+    STORE[("remote-hosts.json<br/>0600")]
+    TOK["token resolver<br/>ssh / file / inline"]
+    TUN["ssh -L supervisor"]
+    UI["client bundle<br/>Plugins section"]
+    SW["top-bar switcher<br/>local / remotes"]
+  end
+
+  subgraph R1["Backend n100"]
+    D1["dsh web :3080"]
+    A1["dsh-remote-agent"]
+    F1[("remote-agent.json<br/>0600")]
+  end
+
+  subgraph R2["Backend m65"]
+    D2["dsh web :3080"]
+    A2["dsh-remote-agent"]
+  end
+
+  B -->|HTTP / WS / SSE<br/>hub cookie| WEB
+  WEB --> HUBPLUG
+  HUBPLUG --> ADMIN
+  HUBPLUG --> STORE
+  HUBPLUG --> TOK
+  HUBPLUG --> TUN
+  HUBPLUG --> UI
+  HUBPLUG --> SW
+  TUN -->|"127.0.0.1:&lt;local&gt;"| D1
+  TUN -->|"127.0.0.1:&lt;local&gt;"| D2
+  TOK -. "ssh cat" .-> F1
+  D1 --> A1 --> F1
+  D2 --> A2
+  SW -. "panes / postMessage" .-> D1
 ```
+
+The backend half is the separate [dsh-remote-agent](https://github.com/yhuan416/dsh-remote-agent)
+project; without it the hub can still use an inline token or a locally readable `tokenFile`.
+The OpenCode integration is a separate project (`dsh-opencode-client`) and is not part of this
+topology.
 
 ## Host plugin (`lib/index.js`)
 

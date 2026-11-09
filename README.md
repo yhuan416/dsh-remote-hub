@@ -4,7 +4,8 @@
 >
 > Deployment guide (Chinese): [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)
 > Robustness notes (Chinese): [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
-> Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
+> Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · 中文架构总览: [docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md)
+> Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
 > Changelog: [CHANGELOG.md](CHANGELOG.md) · Roadmap: [TODO.md](TODO.md)
 
 Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and

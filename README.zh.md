@@ -3,7 +3,7 @@
 > [English](README.md) | 中文
 >
 > 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
-> 架构：[ARCHITECTURE.md](ARCHITECTURE.md) ｜ 兼容性：[COMPATIBILITY.md](COMPATIBILITY.md)
+> 架构：[ARCHITECTURE.md](ARCHITECTURE.md) ｜ 中文架构总览：[docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md) ｜ 兼容性：[COMPATIBILITY.md](COMPATIBILITY.md)
 > 变更记录：[CHANGELOG.md](CHANGELOG.md) ｜ 路线图：[TODO.md](TODO.md)
 
 Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
