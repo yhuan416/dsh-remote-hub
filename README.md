@@ -6,7 +6,7 @@
 > Robustness notes (Chinese): [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
 > Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · 中文架构总览: [docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md)
 > Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
-> Changelog: [CHANGELOG.md](CHANGELOG.md) · Roadmap: [TODO.md](TODO.md)
+> Changelog: [CHANGELOG.md](CHANGELOG.md) · Roadmap: [ROADMAP.md](ROADMAP.md) (中文: [docs/ROADMAP.zh.md](docs/ROADMAP.zh.md))
 
 Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and
 reverse-proxies every registered remote backend under `/remotes/<id>/`. The browser therefore
@@ -19,7 +19,11 @@ channel — the proxy code does not change.
 
 ## Status
 
-P0, validated end-to-end against a real remote over `ssh -L`:
+**M1 (v0.2.0) — multi-backend remote control is usable**: proxy, managed tunnels, token exchange,
+top-bar switching, remote session create/prompt and cwd chooser. See [ROADMAP.md](ROADMAP.md) for
+what comes next (native integration depends on an upstream dsh workspace/session seam).
+
+Validated end-to-end against a real remote over `ssh -L`:
 
 | Check | Result |
 |---|---|

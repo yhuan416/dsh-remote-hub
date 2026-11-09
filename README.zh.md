@@ -4,7 +4,7 @@
 >
 > 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
 > 架构：[ARCHITECTURE.md](ARCHITECTURE.md) ｜ 中文架构总览：[docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md) ｜ 兼容性：[COMPATIBILITY.md](COMPATIBILITY.md)
-> 变更记录：[CHANGELOG.md](CHANGELOG.md) ｜ 路线图：[TODO.md](TODO.md)
+> 变更记录：[CHANGELOG.md](CHANGELOG.md) ｜ 路线图：[ROADMAP.md](ROADMAP.md)（中文：[docs/ROADMAP.zh.md](docs/ROADMAP.zh.md)）
 
 Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
 反向代理到 `/remotes/<id>/` 下。因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 的同源限制
@@ -14,6 +14,10 @@ Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服�
 插件托管的 ssh 隧道，或未来某种 agent 通道——代理代码本身不变。
 
 ## 当前状态
+
+**M1（v0.2.0）——多后端远端控制已可用**：代理、托管隧道、token 交换、顶栏切换、远端会话
+create/prompt、cwd 选择。后续规划见 [docs/ROADMAP.zh.md](docs/ROADMAP.zh.md)（原生整合依赖
+dsh 上游的 workspace/session 接缝）。
 
 P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 
