@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.0 — 2026-11-09
+
+### Added
+
+- **Workspace selection for remote sessions.** `remote_subagent` takes `workspace` (a workspace id
+  or its absolute path) and `/api/remote-hosts/session/create` accepts `workspace`; the new
+  session joins that remote workspace (`session/create` `workspaceId`) instead of owning a bare
+  `cwd`. `workspace` and `cwd` are mutually exclusive at every layer.
+- `resolveRemoteWorkspace()` resolves a workspace path to its id by reading the backend's
+  `workspace.json` store over ssh; the tool/admin errors list the known paths when a path misses.
+
+### Notes
+
+- The upstream subagent seam (`SubagentStartRequest`) still only carries `cwd`, so the native
+  `remote-dsh-<id>` provider rows cannot take a workspace argument; `remote_subagent` is the
+  surface that does.
+- A `cwd`-created session is not recorded in the workspace store (the hub shows it as an orphan);
+  only `workspaceId` creation joins the workspace.
+
 ## 0.4.0 — 2026-11-09
 
 ### Added

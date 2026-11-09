@@ -76,10 +76,14 @@ A remote dsh backend can run work for the current session in its own environment
 model) and return only the final answer:
 
 - **`remote_subagent` tool** — available whenever at least one remote is registered:
-  `{ host?, task, cwd?, session?, timeoutMs? }` creates (or continues) a remote session, sends
-  the task, waits for the remote turn to settle and returns the **full** final assistant text
-  (read from the durable transcript) plus the remote session id. It does not depend on OpenCode
-  being configured.
+  `{ host?, task, workspace?, cwd?, session?, timeoutMs? }` creates (or continues) a remote
+  session, sends the task, waits for the remote turn to settle and returns the **full** final
+  assistant text (read from the durable transcript) plus the remote session id. It does not depend
+  on OpenCode being configured. `workspace` (an id or its absolute path) makes the new session
+  join that remote workspace instead of owning a bare `cwd`, and is exclusive with `cwd`; a path is
+  resolved against the backend's workspace store over ssh, so an upstream-only remote needs the id.
+  A `cwd` session keeps the directory but is not recorded in the workspace store (it shows up as an
+  orphan in the hub's workspace list).
 - **Native dsh subagent providers** — one per host, named `remote-dsh-<id>`. Add a tool row to
   the profile to expose it to the agent (restart after adding a new host):
 
@@ -112,6 +116,8 @@ local Agent or an upstream remote-session provider. Without the native row, use 
 `/api/remote-hosts/session/create` and `/api/remote-hosts/session/prompt` forward
 `session/create` / `session/prompt` through the managed tunnel and remote cookie, so the hub
 can create a session on a chosen remote and send it a prompt without leaving the hub origin.
+`session/create` takes either `cwd` or `workspace` (a workspace id or its absolute path; the two
+are exclusive) — `workspace` joins an existing remote workspace, `cwd` owns a bare directory.
 
 ### OpenCode remotes (prototype)
 

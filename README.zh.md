@@ -82,9 +82,12 @@ Hub 可以把任务交给远端 dsh 后端，在它自己的环境（文件、�
 当前会话：
 
 - **`remote_subagent` 工具**：只要注册了远端就可用，参数
-  `{ host?, task, cwd?, session?, timeoutMs? }`。新建（或续用）远端会话、下发任务、等远端
+  `{ host?, task, workspace?, cwd?, session?, timeoutMs? }`。新建（或续用）远端会话、下发任务、等远端
   turn 结束，返回**完整**的最终文本（从 durable transcript 读取）+ 远端会话 id。不依赖
-  OpenCode 配置。
+  OpenCode 配置。`workspace`（工作区 id 或其绝对路径）让新会话**加入**该远端工作区，而不是只占一个
+  `cwd`；与 `cwd` 互斥。路径会通过 ssh 读取后端的 workspace store 解析，所以只有 upstream、没有 ssh
+  的远端需要直接给 id。用 `cwd` 建的会话目录正确，但不会写进 workspace store（在 hub 的工作区聚合里
+  表现为 orphan）。
 - **原生 dsh 子代理 provider**：每个远端一个 `remote-dsh-<id>`。在 profile 里加一行工具配置
   把它暴露给 agent（新增远端后需重启）：
 

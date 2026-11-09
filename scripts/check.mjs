@@ -104,4 +104,50 @@ assert.deepEqual(structuredResult.structured, { answer: '42' })
 assert.ok(structuredCalls.includes('session/rename'), 'provider renames the remote session with the label')
 assert.ok(structuredCalls.includes('session/selectModel'), 'provider applies model overrides')
 
+// workspace selection: the create branch forwards workspaceId, and it is exclusive with cwd
+const workspaceCreates = []
+const workspaceRpc = async function (host, method, args) {
+  if (method === 'session/create') {
+    workspaceCreates.push(args)
+    return { ok: true, value: { sessionId: 'session-workspace' } }
+  }
+  if (method === 'session/prompt') return { ok: true, value: { accepted: true } }
+  if (method === 'session/list') return { ok: true, value: { items: [{ sessionId: 'session-workspace', running: false, projections: { kind: 'sequenced', asOfSeq: 3, values: { turnOutline: [{ turn: 1, response: 'workspace-ok' }] } } }] } }
+  if (method === 'session/page') return { ok: true, value: { records: [] } }
+  if (method === 'session/cancel') return { ok: true, value: { accepted: true } }
+  return { ok: false, error: { message: 'unexpected ' + method } }
+}
+const workspaceHandle = await startRemoteSubagent({ id: 'n100' }, workspaceRpc, {
+  task: 'hi',
+  workspaceId: '984a7b95-4d3e-4c8d-906d-c22f0671a8bf',
+  pollIntervalMs: 10,
+  timeoutMs: 5000,
+})
+assert.equal((await workspaceHandle.result).stopReason, 'completed')
+assert.deepEqual(workspaceCreates[0].request, { workspaceId: '984a7b95-4d3e-4c8d-906d-c22f0671a8bf' }, 'workspaceId is forwarded to session/create')
+await workspaceHandle.dispose()
+await assert.rejects(
+  startRemoteSubagent({ id: 'n100' }, workspaceRpc, { task: 'hi', workspaceId: 'x', cwd: '/tmp', pollIntervalMs: 10, timeoutMs: 5000 }),
+  /not both/,
+  'workspaceId and cwd are mutually exclusive',
+)
+
+// workspace path resolution against the workspace store
+const workspaceStore = JSON.stringify({
+  tables: {
+    workspaces: {
+      'ws-a': { path: '/home/u/a/', title: 'a' },
+      'ws-b': { path: '/home/u/b', title: 'b' },
+    },
+  },
+})
+const readWorkspaceStore = async function () { return workspaceStore }
+assert.equal(await entry.resolveRemoteWorkspace({ id: 'n100', dshHome: '/home/u/.dsh' }, '/home/u/a', readWorkspaceStore), 'ws-a', 'workspace path resolves to its id (trailing slash tolerated)')
+assert.equal(await entry.resolveRemoteWorkspace({ id: 'n100' }, '11111111-1111-1111-1111-111111111111', readWorkspaceStore), '11111111-1111-1111-1111-111111111111', 'workspace id passes through')
+assert.equal(await entry.resolveRemoteWorkspace({ id: 'n100' }, '', readWorkspaceStore), undefined)
+await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/nope', readWorkspaceStore), /workspace path not found on n100: \/nope; known: \/home\/u\/a, \/home\/u\/b/)
+await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, 'relative/path', readWorkspaceStore), /absolute path/)
+await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/home/u/a', async function () { return undefined }), /workspace store is unreadable/)
+await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/home/u/a', async function () { return 'not json' }), /not valid JSON/)
+
 console.log('check ok')
