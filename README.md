@@ -133,9 +133,10 @@ The plugin injects one floating pill into the hub's own index page via the offic
   ```
 - content: a dropdown listing 本机 + every remote (current one highlighted), a "管理远端…"
   link;
-- the dropdown also offers **"＋ 在 <remote> 新建会话"** per remote: it calls
-  `POST /api/remote-hosts/session/create` and opens the new remote session in that backend's pane
-  (environment selection and new-session creation in one place, no page reload);
+- the top bar and the dropdown offer **"＋ 在 <remote> 新建会话"**: a small chooser lists the
+  remote's known workspace paths (plus "默认目录" and a custom path), remembers the last used cwd,
+  calls `POST /api/remote-hosts/session/create` with it, and opens the new session in that backend's
+  pane (environment selection and new-session creation in one place, no page reload);
 - picking a remote opens a **fullscreen overlay with that backend in an iframe**, so switching never
   reloads the page you are on; iframes stay mounted once opened and switching between backends is
   instant. 本机 / 关闭 / Escape hide the overlay; a remote page rendered inside the overlay posts a
