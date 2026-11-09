@@ -76,6 +76,30 @@ iframe 页面 / 新会话 hero 行）已刻意移除——它们在没有原生�
 - 之后启动：store 是权威来源；配置里新增的 id 会被导入，除非被墓碑标记；
 - 在 UI 里删除会写入墓碑，因此配置里的种子不会重新出现。
 
+## 远端子代理
+
+Hub 可以把任务交给远端 dsh 后端，在它自己的环境（文件、工具、模型）里跑，只把最终答案带回
+当前会话：
+
+- **`remote_subagent` 工具**：只要注册了远端就可用，参数
+  `{ host?, task, cwd?, session?, timeoutMs? }`。新建（或续用）远端会话、下发任务、等远端
+  turn 结束，返回最终文本 + 远端会话 id。不依赖 OpenCode 配置。
+- **原生 dsh 子代理 provider**：每个远端一个 `remote-dsh-<id>`。在 profile 里加一行工具配置
+  把它暴露给 agent（新增远端后需重启）：
+
+```yaml
+- insert:
+    - id: tool-remote-n100
+      name: "@deepseek-ai/dsh-tool-subagent"
+      config:
+        provider: remote-dsh-n100
+        maxDepth: provider-managed
+        toolName: remote_subagent_n100
+```
+
+原生 provider 会把父会话的绝对 cwd 传给远端；该路径必须在后端存在（两边目录布局一致时可直接用）。
+不想加原生行，就用 `remote_subagent` 工具并显式传 `host`/`cwd`。
+
 ## 管理 API（owner-only，同源 Cookie）
 
 | 路由 | 方法 | 请求体 | 返回 |

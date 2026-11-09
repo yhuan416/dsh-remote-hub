@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — 2026-11-09
+
+### Added
+
+- `remote_subagent` tool: create or continue a remote dsh session, wait for the turn to settle,
+  and return the final assistant text plus the remote session id.
+- Native dsh subagent providers `remote-dsh-<host id>` for `dsh-tool-subagent` rows.
+- Remote dsh providers/tools are registered independently of OpenCode configuration.
+
+### Changed
+
+- `remote_sessions` is now available even when no OpenCode server is configured.
+- M2 roadmap updated: remote subagents are the priority; hub-side session lifecycle is deferred
+  because the remote page already provides it.
+
 ## 0.2.0 — 2026-11-09
 
 ### Added

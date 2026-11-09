@@ -70,6 +70,32 @@ Remote sessions stay inside the backend's own proxied UI; they are not native lo
 Earlier embedded overviews (sidebar mirror, iframe page, hero row) were removed deliberately —
 they layered UI without a native data seam. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
+### Remote subagents
+
+A remote dsh backend can run work for the current session in its own environment (files, tools,
+model) and return only the final answer:
+
+- **`remote_subagent` tool** — available whenever at least one remote is registered:
+  `{ host?, task, cwd?, session?, timeoutMs? }` creates (or continues) a remote session, sends
+  the task, waits for the remote turn to settle and returns the final assistant text plus the
+  remote session id. It does not depend on OpenCode being configured.
+- **Native dsh subagent providers** — one per host, named `remote-dsh-<id>`. Add a tool row to
+  the profile to expose it to the agent (restart after adding a new host):
+
+```yaml
+- insert:
+    - id: tool-remote-n100
+      name: "@deepseek-ai/dsh-tool-subagent"
+      config:
+        provider: remote-dsh-n100
+        maxDepth: provider-managed
+        toolName: remote_subagent_n100
+```
+
+The provider passes the parent's absolute cwd to the remote session; the path must exist on the
+backend (identical layouts work as-is). Without the native row, use the `remote_subagent` tool
+with an explicit `host`/`cwd`.
+
 ### Remote session control
 
 `/api/remote-hosts/session/create` and `/api/remote-hosts/session/prompt` forward

@@ -189,12 +189,37 @@ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:3080/remotes/
 
 适用于你先手动 `ssh -L 3182:127.0.0.1:3080 user@host` 的情况。
 
+### 3.4 让 Hub 的 agent 在远端跑子代理
+
+两种方式，任选：
+
+1. **通用工具**（无需改 profile，注册了远端就生效）：agent 调 `remote_subagent`
+   `{ host: "n100", task: "...", cwd?: "/home/yhuan/workspace/gitlab/new_fw" }`。
+   工具会在远端建会话、下发任务、等 turn 结束并返回最终文本；`session=` 可续用上一次远端会话。
+2. **原生子代理 provider**：每个远端注册为 `remote-dsh-<id>`。在
+   `~/.dsh/profiles/web/cordis.patch.yml` 加：
+
+```yaml
+- insert:
+    - id: tool-remote-n100
+      name: "@deepseek-ai/dsh-tool-subagent"
+      config:
+        provider: remote-dsh-n100
+        maxDepth: provider-managed
+        toolName: remote_subagent_n100
+```
+
+重启 Hub 后，agent 的工具列表里出现 `remote_subagent_n100`，用法与其它原生子代理一致。
+注意：原生 provider 会把父会话 cwd 传给远端，路径必须存在；新增/删除远端后需要重启 Hub
+才会重新注册 provider。
+
 ## 4. 日常使用
 
 | 场景 | 操作 |
 |---|---|
 | 切后端 | 顶部常驻切换栏 → 选目标 |
 | 在远端新建会话 | 顶栏选中远端 → 「＋ 在 … 新建会话」→ 选 cwd（工作区/自定义/默认） |
+| 在远端跑子代理 | agent 用 `remote_subagent`，或原生 `remote_subagent_<host>` 工具 |
 | 管远端 | 设置 → 插件 → dsh-remote-hub → 「远端链路」 |
 | 看状态 | 顶栏状态点（悬停看详情），或 `/remotes/_status`（JSON） |
 | 测试连通 | 插件页每行的「测试」（隧道 + token + HTTP 全链路，返回延迟） |

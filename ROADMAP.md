@@ -34,12 +34,17 @@ Two rules guide the roadmap:
 Known gaps: native workspace/session merge is not implemented (upstream blocker); remote session
 lifecycle actions are minimal; transport is ssh/direct only.
 
-### M2 — Reusable remote console (next, no upstream dependency)
+### M2 — Reusable remote console (in progress, no upstream dependency)
 
-1. **Session lifecycle**: archive/delete/pin/rename, running badge, prompt from the hub section,
-   completion notification, cwd recents per backend.
+0. **Remote subagents — done in this iteration**: `remote_subagent` tool (create/continue a
+   remote session, wait for the turn, return the final answer) and native `remote-dsh-<id>`
+   providers for `dsh-tool-subagent` rows. This is the highest-value M2 item because the remote
+   pane already provides the full UI for interactive work.
+1. **Session lifecycle — deferred on purpose**: archive/delete/pin/rename, running badges and
+   prompts already exist in the remote page; add hub-side controls only if a concrete need appears.
 2. **Reliability**: offline integration tests with a fake upstream (proxy rewrite, cookie exchange,
-   RPC envelope, tunnel failure), version handshake between hub and backend, diagnostics export.
+   RPC envelope, tunnel failure), remote-subagent polling/continuation tests, version handshake,
+   diagnostics export.
 3. **Transport**: reverse WebSocket / agent channel for hubs that cannot dial the backend; explicit
    `transport` abstraction behind the existing proxy.
 4. **Multi-host polish**: m65-style fleet rollout, host labels/order, health polling, cached
