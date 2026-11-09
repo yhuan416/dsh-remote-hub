@@ -1,24 +1,35 @@
 {
   "name": "dsh-remote-hub",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Hub-side DSH host plugin: reverse-proxies multiple dsh web backends under /remotes/<id>/, manages their ssh -L tunnels, resolves launch tokens, and ships an admin UI.",
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",
-    "./client": "./lib/client.js"
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
   },
   "files": [
-    "lib/index.js",
-    "lib/client.js",
+    "lib",
     "cordis.patch.yml",
+    "icon.svg",
+    "LICENSE",
     "README.md",
     "README.zh.md",
-    "docs"
+    "ARCHITECTURE.md",
+    "COMPATIBILITY.md",
+    "CHANGELOG.md",
+    "TODO.md",
+    "docs",
+    "scripts/install.sh",
+    "scripts/check.mjs",
+    "scripts/check-launcher.mjs"
   ],
   "engines": {
-    "node": ">=22.19.0"
+    "node": ">=22.19.0",
+    "dsh": ">=0.2.1-rc.2"
   },
   "license": "MIT",
   "keywords": [
@@ -29,6 +40,7 @@
     "ssh"
   ],
   "dsh": {
+    "manifestVersion": 1,
     "bundle": {
       "patch": "./cordis.patch.yml"
     },
@@ -40,7 +52,7 @@
     }
   },
   "scripts": {
-    "check": "node scripts/check-launcher.mjs"
+    "check": "node scripts/check.mjs && node scripts/check-launcher.mjs"
   },
   "repository": {
     "type": "git",
@@ -49,5 +61,6 @@
   "homepage": "https://github.com/yhuan416/dsh-remote-hub#readme",
   "bugs": {
     "url": "https://github.com/yhuan416/dsh-remote-hub/issues"
-  }
+  },
+  "icon": "./icon.svg"
 }

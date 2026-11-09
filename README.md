@@ -4,6 +4,8 @@
 >
 > Deployment guide (Chinese): [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)
 > Robustness notes (Chinese): [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
+> Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
+> Changelog: [CHANGELOG.md](CHANGELOG.md) · Roadmap: [TODO.md](TODO.md)
 
 Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and
 reverse-proxies every registered remote backend under `/remotes/<id>/`. The browser therefore
@@ -50,6 +52,18 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
 
 `/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
 remains the API behind the Plugins section.
+
+### Switching environments and creating remote sessions
+
+The supported multi-backend UX is the **top-bar environment switcher** (本机 + every remote).
+Selecting a remote shows **＋ 在 <remote> 新建会话** in the bar. The action opens a small cwd
+chooser (known workspace paths, a custom path, or the remote default; the last used directory is
+remembered per remote), calls `POST /api/remote-hosts/session/create`, and opens the new session
+in that backend's pane.
+
+Remote sessions stay inside the backend's own proxied UI; they are not native local sessions.
+Earlier embedded overviews (sidebar mirror, iframe page, hero row) were removed deliberately —
+they layered UI without a native data seam. See [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ### Remote session control
 
@@ -262,6 +276,9 @@ The script symlinks the package, records it as a profile **dependency** and sele
 invisible there), drops the legacy manual patch row when present, and backs up both files first.
 Restart `dsh web` afterwards: the bundle selection is composed at startup.
 
+Offline checks after editing: `npm run check` (module exports + generated markup). End-to-end
+setup: [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md).
+
 Management lives in **Settings → Plugins → Installed plugins → dsh-remote-hub**.
 
 ## Roadmap
@@ -271,9 +288,11 @@ Management lives in **Settings → Plugins → Installed plugins → dsh-remote-
 - ✅ Per-remote `ssh -L` supervisor (port allocation, backoff, cleanup)
 - ✅ Agent plugin publishing `~/.dsh/remote-agent.json`; the hub reads the token over ssh
 - ✅ Sidebar switcher on the default UI
+- ✅ Remote session create/prompt APIs + top-bar cwd chooser
 - ⬜ Transport abstraction: `ssh-reverse` / WebSocket dial when the hub is reachable
 - ✅ Client half: Plugins-page section (远端链路) + generated config form
-- ⬜ Unified workspace/session list across backends
+- ⬜ Native remote workspace/session integration — blocked on an upstream DSH workspace/session
+  provider seam; do not re-implement with DOM/iframe layering (see `TODO.md`)
 
 ## OpenCode integration moved
 

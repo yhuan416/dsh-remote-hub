@@ -2,7 +2,9 @@
 
 > [English](README.md) | 中文
 >
-> 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)。
+> 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
+> 架构：[ARCHITECTURE.md](ARCHITECTURE.md) ｜ 兼容性：[COMPATIBILITY.md](COMPATIBILITY.md)
+> 变更记录：[CHANGELOG.md](CHANGELOG.md) ｜ 路线图：[TODO.md](TODO.md)
 
 Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
 反向代理到 `/remotes/<id>/` 下。因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 的同源限制
@@ -43,6 +45,17 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 
 `/remotes/` 现在只是**兜底入口页**（纯链接，不再有管理台）；`/api/remote-hosts/*` 仍是插件页区块使用的 API。
 
+## 切换环境与新建远端会话
+
+多后端的主入口是**顶部环境切换栏**（本机 + 每个远端）。选中某个远端后，栏右侧出现
+**＋ 在 <远端> 新建会话**：弹出 cwd 选择框（远端已知工作区路径 / 自定义路径 / 远端默认，
+并记住该远端上次使用的目录），调用 `POST /api/remote-hosts/session/create` 创建会话，
+再在该后端的 pane 中打开。
+
+远端会话始终运行在后端自己的代理 UI 里，不是本地原生会话。之前的嵌入方案（侧边栏镜像 /
+iframe 页面 / 新会话 hero 行）已刻意移除——它们在没有原生数据接缝的情况下叠加 UI；
+详见 [ARCHITECTURE.md](ARCHITECTURE.md)。
+
 ## 存储
 
 运行期配置存放在 `$DSH_HOME/remote-hosts.json`（0600，原子写）：
@@ -68,6 +81,8 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 | /api/remote-hosts/remove | POST | { id } | { ok } |
 | /api/remote-hosts/workspaces | GET | — | 每个远端的 workspaces[{id,title,path,sessions[]}] + orphans；ssh 读后端 workspace store，直连按 cwd 分组 |
 | /api/remote-hosts/probe | POST | { id } | { ok, result: { status, latencyMs, tokenResolved, hasCookie } } |
+| /api/remote-hosts/session/create | POST | { id, cwd? } | { ok, sessionId, agentPreset }（转发远端 session/create） |
+| /api/remote-hosts/session/prompt | POST | { id, sessionId, text, mode? } | { ok, accepted }（转发远端 session/prompt） |
 
 这些路由通过 `ctx.connection.fetch.register` 注册，框架会强制 owner Peer 与浏览器信任围栏。
 
