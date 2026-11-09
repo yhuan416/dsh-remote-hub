@@ -133,10 +133,6 @@ The plugin injects one floating pill into the hub's own index page via the offic
   ```
 - content: a dropdown listing 本机 + every remote (current one highlighted), a "管理远端…"
   link;
-- every remote is also mirrored as **one workspace row inside the native sidebar workspace list**
-  (collapsible, sessions sorted by activity, "+" creates a session with a cwd chooser). This is a
-  DOM-level mirror of the remote data, not a second data source: disable it with
-  `switcher.sidebarTree: false` if a future dsh layout change makes it undesirable.
 - a dedicated **远端工作区** entry in the native sidebar opens one page that aggregates every
   backend's workspaces and sessions in a single tree; picking a session embeds that backend's UI
   beside the tree, so several remotes can be managed without switching the top-bar environment
