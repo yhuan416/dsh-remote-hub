@@ -11,6 +11,13 @@
 - Offline tests with a fake upstream: proxy rewrite, cookie exchange, RPC envelope, failure modes.
 - Version handshake: warn when the remote's `dsh --version` differs from the hub's.
 
+## Upstream (blocked on dsh, see ROADMAP.md → M5)
+
+- External subagent provider: continuable remote children, event stream, parent-context snapshot,
+  depth propagation and maxTokens.
+- Remote session / execution provider for native attach or transparent remote fs/shell.
+- Remote capability advertisement from dsh-remote-agent.
+
 ## Later
 
 - Transport abstraction: reverse WebSocket / agent channel when the hub cannot reach the backend.

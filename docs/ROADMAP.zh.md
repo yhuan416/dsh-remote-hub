@@ -68,6 +68,32 @@ ssh/直连。
 - 发布到 npm/私有仓库、版本矩阵、升级提示；
 - 机群面板：健康、版本、最近错误、会话数。
 
+### M5 — 上游接缝提案（依赖 dsh，不是 hub 能单独完成的）
+
+记录在这里是为了守住边界：hub 插件单方面做不到，且明确拒绝用 DOM/iframe/流抓取等 workaround 硬补。
+
+1. **可扩展的 external subagent provider**——现在 `SubagentProvider.start()` 只暴露最终
+   `result`，远端 external child 因此无法对齐本地 child。建议增加：
+   - 可续用的远端 child（`prepareContinuable` 或等价的远端生命周期）；
+   - 工具调用 / assistant 增量 / 审批的事件流通道；
+   - 父上下文快照选项（以及诚实的 `inheritsParentContext` 语义）；
+   - delegation depth 传递和 `agentOptions.maxTokens` 支持。
+
+   验收：远端 child 可以被 steer/continue，工具进度出现在父会话里，上下文与 depth 行为与本地
+   child 一致。
+
+2. **远端 session / execution provider**——让本地会话原生 attach 远端 dsh 会话，或让本地
+   `fs`/`shell` 工具直接跑在远端执行世界。候选形态：通用 remote-session provider
+   （history/events/prompt/cancel/审批）或 per-session `fs`+`shell` provider 接缝。
+
+   验收：远端工作区/会话出现在原生侧边栏或会话里，不经过 iframe，本地 agent 能透明读写/执行。
+
+3. **远端能力上报**——扩展 `dsh-remote-agent` 发布 dsh 版本、terminal 限制、已配置的
+   plugins/MCP/skills，让 Hub 校验兼容性并只暴露可用能力。
+
+在这些落地前，支持的分工是：**tab = 完整远端 dsh 会话；远端子代理 = 任务级委派，
+具备 agent preset/model/schema/label/abort 对齐**。
+
 ## 明确不做
 
 - LLM 桥接（代理模型/agent 流）——会丢 dsh 原生内容；

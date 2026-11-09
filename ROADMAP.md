@@ -79,6 +79,37 @@ remote; conversation renders without an iframe; approvals/questions route correc
 - Published packaging / private registry install, version matrix, upgrade hints.
 - Fleet dashboard: health, versions, last error, session counts per backend.
 
+### M5 — Upstream seam proposals (blocked on dsh, not hub-only)
+
+Recorded here so the boundary stays visible: the hub plugin cannot close these gaps alone, and
+workarounds (DOM/iframe overlays, stream scraping) are explicitly rejected.
+
+1. **Extensible external subagent providers** — today `SubagentProvider.start()` only exposes a
+   final `result`; external remote children therefore cannot match local children. Proposed
+   additions:
+   - continuable remote children (`prepareContinuable` or an equivalent remote lifecycle);
+   - an event/stream channel for tool calls, assistant deltas and approvals;
+   - a parent-context snapshot option (and an honest `inheritsParentContext` variant);
+   - delegation-depth propagation and `agentOptions.maxTokens` support.
+
+   Acceptance: a remote child can be steered/continued, its tool progress appears in the parent,
+   and its context/depth behavior matches a local child.
+
+2. **Remote session / execution provider** — let a local conversation attach a remote dsh session
+   natively, or let local `fs`/`shell` tools execute against a remote execution world. Candidate
+   shapes: a generic remote-session provider (history/events/prompt/cancel/approvals) or a
+   per-session `fs`+`shell` provider seam.
+
+   Acceptance: remote workspace/session appears in the native sidebar or conversation, with no
+   iframe, and the local agent can read/write/run against the remote world transparently.
+
+3. **Remote capability advertisement** — extend `dsh-remote-agent` to publish dsh version,
+   terminal limits, and configured plugins/MCP/skills so the hub can validate compatibility and
+   expose only supported features.
+
+Until these exist, the supported split is: **tab = full remote dsh session; remote subagent =
+task-level delegation with agent preset/model/schema/label/abort parity**.
+
 ## Not planned
 
 - LLM bridging (proxying model/agent streams) — loses dsh-native content.
