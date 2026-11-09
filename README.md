@@ -51,6 +51,12 @@ Remote management lives in the unified **Plugins** page: **Settings → Plugins 
 `/remotes/` is now only a fallback entry page (plain links, no admin console). `/api/remote-hosts/*`
 remains the API behind the Plugins section.
 
+### Remote session control
+
+`/api/remote-hosts/session/create` and `/api/remote-hosts/session/prompt` forward
+`session/create` / `session/prompt` through the managed tunnel and remote cookie, so the hub
+can create a session on a chosen remote and send it a prompt without leaving the hub origin.
+
 ### OpenCode remotes (prototype)
 
 Independent of dsh remotes, the plugin can treat **opencode servers** as another kind of remote:
@@ -125,8 +131,11 @@ The plugin injects one floating pill into the hub's own index page via the offic
       offsetX: 14
       offsetY: 14
   ```
-- content: a dropdown listing 本机 + every remote (current one highlighted) and a "管理远端…"
+- content: a dropdown listing 本机 + every remote (current one highlighted), a "管理远端…"
   link;
+- the dropdown also offers **"＋ 在 <remote> 新建会话"** per remote: it calls
+  `POST /api/remote-hosts/session/create` and opens the new remote session in that backend's pane
+  (environment selection and new-session creation in one place, no page reload);
 - picking a remote opens a **fullscreen overlay with that backend in an iframe**, so switching never
   reloads the page you are on; iframes stay mounted once opened and switching between backends is
   instant. 本机 / 关闭 / Escape hide the overlay; a remote page rendered inside the overlay posts a
