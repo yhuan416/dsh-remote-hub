@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
 import * as entry from '../lib/index.js'
-import { promptText, startRemoteSubagent, createRemoteProvider } from '../lib/remote-subagent.js'
+import { promptText, startRemoteSubagent, createRemoteProvider, parseStructured } from '../lib/remote-subagent.js'
 
 assert.equal(entry.name, 'remote-hub')
 assert.deepEqual(entry.inject, ['webServer', 'connection', 'tools'])
@@ -64,6 +64,44 @@ assert.ok(remoteResult.output[0].text.length > 200)
 await handle.dispose()
 const provider = createRemoteProvider({ id: 'n100' }, fakeRpc)
 assert.equal(provider.name, 'remote-dsh-n100')
-assert.equal(provider.capabilities.outputSchema, false)
+assert.equal(provider.capabilities.outputSchema, true)
+assert.equal(provider.capabilities.agentOptions, true)
+assert.equal(provider.capabilities.agentPreset, true)
+
+assert.deepEqual(parseStructured('```json\n{"answer":"42"}\n```', { type: 'object', required: ['answer'] }), { answer: '42' })
+assert.equal(parseStructured('not json', { type: 'object' }), undefined)
+
+const structuredCalls = []
+let structuredListCalls = 0
+const structuredRpc = async function (host, method) {
+  structuredCalls.push(method)
+  if (method === 'session/create') return { ok: true, value: { sessionId: 'session-structured' } }
+  if (method === 'session/rename') return { ok: true, value: { title: 'x', seq: 1 } }
+  if (method === 'session/selectModel') return { ok: true, value: { selected: { provider: 'p', model: 'm' } } }
+  if (method === 'session/prompt') return { ok: true, value: { accepted: true } }
+  if (method === 'session/list') {
+    structuredListCalls += 1
+    if (structuredListCalls === 1) return { ok: true, value: { items: [{ sessionId: 'session-structured', running: true, projections: { values: { turnOutline: [] } } }] } }
+    return { ok: true, value: { items: [{ sessionId: 'session-structured', running: false, projections: { kind: 'sequenced', asOfSeq: 5, values: { turnOutline: [{ turn: 1, response: '{"answer":"42"}' }] } } }] } }
+  }
+  if (method === 'session/page') return { ok: true, value: { records: [{ type: 'event', event: { type: 'assistant/message', seq: 4, time: 1, data: { message: { role: 'assistant', content: [{ type: 'text', text: '{"answer":"42"}' }] } } } }], hasMore: false } }
+  if (method === 'session/cancel') return { ok: true, value: { accepted: true } }
+  return { ok: false, error: { message: 'unexpected ' + method } }
+}
+const structuredProvider = createRemoteProvider({ id: 'n100' }, structuredRpc)
+const structuredRun = await structuredProvider.start({
+  cwd: '/tmp',
+  prompt: [{ type: 'text', text: 'give json' }],
+  outputSchema: { type: 'object', required: ['answer'] },
+  agentPreset: 'standard',
+  agentOptions: { provider: 'p', model: 'm' },
+  label: 'demo',
+  signal: new AbortController().signal,
+})
+const structuredResult = await structuredRun.result
+assert.equal(structuredResult.stopReason, 'completed')
+assert.deepEqual(structuredResult.structured, { answer: '42' })
+assert.ok(structuredCalls.includes('session/rename'), 'provider renames the remote session with the label')
+assert.ok(structuredCalls.includes('session/selectModel'), 'provider applies model overrides')
 
 console.log('check ok')

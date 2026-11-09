@@ -34,7 +34,8 @@ ssh/直连。
 ### M2 — 可复用的远端控制台（进行中，不依赖上游）
 
 0. **远端子代理——本轮已完成**：`remote_subagent` 工具（新建/续用远端会话、等 turn 结束、
-   返回最终答案）+ 原生 `remote-dsh-<id>` provider（供 `dsh-tool-subagent` 行使用）。
+   返回最终答案）+ 原生 `remote-dsh-<id>` provider（供 `dsh-tool-subagent` 行使用），并尽量对齐
+   本地子代理（agentPreset、模型覆盖、outputSchema、label）。
    这是 M2 里性价比最高的一项，因为交互式操作已经由远端完整页面承担。
 1. **会话生命周期——有意延后**：归档/删除/置顶/重命名、运行徽标、发 prompt 在远端页面里已有；
    只有出现明确需求时再做 Hub 侧控制。

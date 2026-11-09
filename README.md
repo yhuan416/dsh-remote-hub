@@ -93,9 +93,19 @@ model) and return only the final answer:
         toolName: remote_subagent_n100
 ```
 
-The provider passes the parent's absolute cwd to the remote session; the path must exist on the
-backend (identical layouts work as-is). Without the native row, use the `remote_subagent` tool
-with an explicit `host`/`cwd`.
+Parity with local subagents (as far as the external-provider seam allows):
+
+- `agentPreset` is forwarded to `session/create`;
+- `agentOptions.provider/model/reasoningEffort` is applied with `session/selectModel` (the model
+  must exist on the remote; `maxTokens` is rejected because the remote selection API cannot set it);
+- `outputSchema` is prompt-enforced and validated locally, returning `structured`;
+- `label` renames the remote session to `dsh subagent: <label>`;
+- abort/dispose cancels the remote turn.
+
+Not possible through this seam: continuable children, live tool/event streaming into the parent,
+shared parent context, depth-limit inheritance, and native subagent catalog cards — those need a
+local Agent or an upstream remote-session provider. Without the native row, use the
+`remote_subagent` tool with an explicit `host`/`cwd`.
 
 ### Remote session control
 

@@ -22,7 +22,8 @@ The plugin talks to a backend through the DSH gateway:
 - Session methods used: `session/list` (args key `_request`), `session/create` (args key
   `request`, optional `cwd`), `session/prompt` (args key `request`), `session/projections`
   (args key `request`), and `session/page` (args key `request`, `address.kind = "session"`)
-  for the full assistant transcript.
+  for the full assistant transcript; `session/rename` and `session/selectModel` are used by the
+  native `remote-dsh-<id>` provider for labels and model overrides.
 - The remote workspace store is read over ssh from `<dshHome>/storages/workspace.json`
   (`tables.workspaces`, `global.workspaceIds`, `sessionIds`); when unreadable, sessions are
   grouped by `cwd` instead.

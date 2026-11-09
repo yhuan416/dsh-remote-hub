@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 — 2026-11-09
+
+### Added
+
+- Native `remote-dsh-<id>` provider parity with local subagents where the external-provider seam
+  allows: `agentPreset` forwarding, `agentOptions.provider/model/reasoningEffort` via
+  `session/selectModel`, prompt-enforced `outputSchema` with local validation, and session rename
+  from the subagent label.
+
+### Known limits
+
+- Remote children remain one-shot: no continuable children, live tool/event streaming into the
+  parent, shared parent context, or depth-limit inheritance.
+
 ## 0.3.1 — 2026-11-09
 
 ### Fixed

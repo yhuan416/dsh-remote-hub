@@ -99,6 +99,17 @@ Hub 可以把任务交给远端 dsh 后端，在它自己的环境（文件、�
 ```
 
 原生 provider 会把父会话的绝对 cwd 传给远端；该路径必须在后端存在（两边目录布局一致时可直接用）。
+在外部 provider 接缝允许的范围内，尽量对齐本地子代理：
+
+- `agentPreset` 透传给 `session/create`
+- `agentOptions.provider/model/reasoningEffort` 通过 `session/selectModel` 应用（模型必须存在于远端；
+  `maxTokens` 会被拒绝，因为远端选择 API 不支持）
+- `outputSchema` 用 prompt 约束 + 本地校验，返回 `structured`
+- `label` 会把远端会话重命名为 `dsh subagent: <label>`
+- abort/dispose 会取消远端 turn
+
+做不到：可续用子会话、把远端工具/事件实时流进父会话、共享父上下文、继承 depth 限制、
+原生 subagent catalog 卡片——这些需要本地 Agent 或上游的 remote-session provider。
 不想加原生行，就用 `remote_subagent` 工具并显式传 `host`/`cwd`。
 
 ## 管理 API（owner-only，同源 Cookie）

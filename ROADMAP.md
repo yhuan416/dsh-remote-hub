@@ -38,8 +38,9 @@ lifecycle actions are minimal; transport is ssh/direct only.
 
 0. **Remote subagents — done in this iteration**: `remote_subagent` tool (create/continue a
    remote session, wait for the turn, return the final answer) and native `remote-dsh-<id>`
-   providers for `dsh-tool-subagent` rows. This is the highest-value M2 item because the remote
-   pane already provides the full UI for interactive work.
+   providers for `dsh-tool-subagent` rows (plus agent preset/model/schema/label parity). This is
+   the highest-value M2 item because the remote pane already provides the full UI for interactive
+   work.
 1. **Session lifecycle — deferred on purpose**: archive/delete/pin/rename, running badges and
    prompts already exist in the remote page; add hub-side controls only if a concrete need appears.
 2. **Reliability**: offline integration tests with a fake upstream (proxy rewrite, cookie exchange,
