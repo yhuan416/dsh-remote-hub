@@ -133,9 +133,6 @@ The plugin injects one floating pill into the hub's own index page via the offic
   ```
 - content: a dropdown listing 本机 + every remote (current one highlighted), a "管理远端…"
   link;
-- the **new-session hero** (empty conversation page) also shows a remote environment row:
-  host select + cwd input + "在远端新建会话", so a remote session can be started straight from the
-  normal new-session screen;
 - the top bar and the dropdown offer **"＋ 在 <remote> 新建会话"**: a small chooser lists the
   remote's known workspace paths (plus "默认目录" and a custom path), remembers the last used cwd,
   calls `POST /api/remote-hosts/session/create` with it, and opens the new session in that backend's
