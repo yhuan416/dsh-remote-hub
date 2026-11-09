@@ -48,8 +48,9 @@ const fakeRpc = async function (host, method) {
   if (method === 'session/list') {
     listCalls += 1
     if (listCalls === 1) return { ok: true, value: { items: [{ sessionId: 'session-check', running: true, projections: { values: { turnOutline: [] } } }] } }
-    return { ok: true, value: { items: [{ sessionId: 'session-check', running: false, projections: { values: { turnOutline: [{ turn: 1, response: 'answer-ok' }] } } }] } }
+    return { ok: true, value: { items: [{ sessionId: 'session-check', running: false, projections: { kind: 'sequenced', asOfSeq: 21, values: { turnOutline: [{ turn: 1, response: 'answer-ok' }] } } }] } }
   }
+  if (method === 'session/page') return { ok: true, value: { records: [{ type: 'event', event: { type: 'assistant/message', seq: 19, time: 1, data: { message: { role: 'assistant', content: [{ type: 'reasoning', text: 'hidden' }, { type: 'text', text: 'full-answer-' + 'x'.repeat(200) }] } } } }], hasMore: false } }
   if (method === 'session/cancel') return { ok: true, value: { accepted: true } }
   return { ok: false, error: { message: 'unexpected ' + method } }
 }
@@ -57,7 +58,9 @@ const handle = await startRemoteSubagent({ id: 'n100' }, fakeRpc, { task: 'hi', 
 assert.equal(handle.id, 'session-check')
 const remoteResult = await handle.result
 assert.equal(remoteResult.stopReason, 'completed')
-assert.deepEqual(remoteResult.output, [{ type: 'text', text: 'answer-ok' }])
+assert.equal(remoteResult.output.length, 1)
+assert.ok(remoteResult.output[0].text.startsWith('full-answer-'), 'reads the full transcript, not the 120-char outline')
+assert.ok(remoteResult.output[0].text.length > 200)
 await handle.dispose()
 const provider = createRemoteProvider({ id: 'n100' }, fakeRpc)
 assert.equal(provider.name, 'remote-dsh-n100')

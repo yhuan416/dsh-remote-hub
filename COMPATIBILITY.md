@@ -20,7 +20,9 @@ The plugin talks to a backend through the DSH gateway:
   `{ type: 'client-request', rpcId, method: '<ns>/<method>', payload: { args } }`;
   the response is `{ type: 'server-response', rpcId, result: { ok, value | error } }`.
 - Session methods used: `session/list` (args key `_request`), `session/create` (args key
-  `request`, optional `cwd`), `session/prompt` (args key `request`).
+  `request`, optional `cwd`), `session/prompt` (args key `request`), `session/projections`
+  (args key `request`), and `session/page` (args key `request`, `address.kind = "session"`)
+  for the full assistant transcript.
 - The remote workspace store is read over ssh from `<dshHome>/storages/workspace.json`
   (`tables.workspaces`, `global.workspaceIds`, `sessionIds`); when unreadable, sessions are
   grouped by `cwd` instead.

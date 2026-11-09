@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 — 2026-11-09
+
+### Fixed
+
+- `remote_subagent` / `remote-dsh-<id>` returned the ~120-character `turnOutline` preview instead
+  of the full assistant answer. The result is now read from the durable transcript with
+  `session/page` (`assistant/message` events), falling back to the preview only when the
+  transcript is unavailable.
+
 ## 0.3.0 — 2026-11-09
 
 ### Added

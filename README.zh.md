@@ -83,7 +83,8 @@ Hub 可以把任务交给远端 dsh 后端，在它自己的环境（文件、�
 
 - **`remote_subagent` 工具**：只要注册了远端就可用，参数
   `{ host?, task, cwd?, session?, timeoutMs? }`。新建（或续用）远端会话、下发任务、等远端
-  turn 结束，返回最终文本 + 远端会话 id。不依赖 OpenCode 配置。
+  turn 结束，返回**完整**的最终文本（从 durable transcript 读取）+ 远端会话 id。不依赖
+  OpenCode 配置。
 - **原生 dsh 子代理 provider**：每个远端一个 `remote-dsh-<id>`。在 profile 里加一行工具配置
   把它暴露给 agent（新增远端后需重启）：
 

@@ -77,8 +77,9 @@ model) and return only the final answer:
 
 - **`remote_subagent` tool** — available whenever at least one remote is registered:
   `{ host?, task, cwd?, session?, timeoutMs? }` creates (or continues) a remote session, sends
-  the task, waits for the remote turn to settle and returns the final assistant text plus the
-  remote session id. It does not depend on OpenCode being configured.
+  the task, waits for the remote turn to settle and returns the **full** final assistant text
+  (read from the durable transcript) plus the remote session id. It does not depend on OpenCode
+  being configured.
 - **Native dsh subagent providers** — one per host, named `remote-dsh-<id>`. Add a tool row to
   the profile to expose it to the agent (restart after adding a new host):
 
