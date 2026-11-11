@@ -28,7 +28,7 @@ for (const marker of ['/remotes/demo/', '/remotes/_status', '回到本机']) {
 const pageBytes = page.includes('<script>') ? parseInline(page, 'launcher page') : page.length
 
 const switcher = switcherMarkup([{ id: 'demo', label: 'demo' }], 'local', undefined)
-for (const marker of ['dsh-hub-switch-data', 'dsh-hub-bar', 'dsh-hub-pane', 'padding-top:34px', 'postMessage', '--dsw-alias-bg-base', 'dropdown']) {
+for (const marker of ['dsh-hub-switch-data', 'dsh-hub-bar', 'dsh-hub-pane', 'padding-top:34px', 'postMessage', '--dsw-alias-bg-base', 'dropdown', 'body.workspace', '工作区：']) {
   if (!switcher.includes(marker)) throw new Error('switcher is missing ' + marker)
 }
 if (!switcher.includes('if(!framed){')) throw new Error('switcher must not build the bar inside an iframe')

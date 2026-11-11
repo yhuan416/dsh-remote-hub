@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.6.0 — 2026-11-11
+
+### Added
+
+- `remote_sessions` renders session times as local wall-clock time with the UTC offset instead of a
+  bare UTC timestamp.
+- Version handshake: health probes parse the backend's `__DSH_BOOT__.release.version`, log a
+  mismatch against the hub's own dsh version, expose `remoteVersion` / `hubVersion` /
+  `versionWarning` from `/api/remote-hosts/list` and `/api/remote-hosts/probe`, and show the warning
+  in the switcher status tooltip.
+- The top-bar **＋ 在 <remote> 新建会话** chooser lists the remote's workspaces and creates the
+  session with `workspace`; known cwd paths, a custom path, and the remote default remain as
+  fallbacks.
+
 ## 0.5.0 — 2026-11-09
 
 ### Added

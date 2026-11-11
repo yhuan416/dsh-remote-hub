@@ -39,6 +39,11 @@ Validated end-to-end against a real remote over `ssh -L`:
 | unknown remote | 404 |
 | two remotes at once | both 200/101, independent boot graphs |
 
+Every health probe also parses the backend's `__DSH_BOOT__.release.version`; a mismatch with the
+hub's own dsh version is logged, exposed as `remoteVersion` / `hubVersion` / `versionWarning` by
+`GET /api/remote-hosts/list` and `POST /api/remote-hosts/probe`, and shown in the switcher's status
+tooltip.
+
 ## Screenshots
 
 Hub with the top-bar environment switcher — `本机 (local)` plus every registered remote; picking a
@@ -73,10 +78,11 @@ remains the API behind the Plugins section.
 ### Switching environments and creating remote sessions
 
 The supported multi-backend UX is the **top-bar environment switcher** (本机 + every remote).
-Selecting a remote shows **＋ 在 <remote> 新建会话** in the bar. The action opens a small cwd
-chooser (known workspace paths, a custom path, or the remote default; the last used directory is
-remembered per remote), calls `POST /api/remote-hosts/session/create`, and opens the new session
-in that backend's pane.
+Selecting a remote shows **＋ 在 <remote> 新建会话** in the bar. The action opens a small chooser
+that lists the remote's workspaces first (the session joins one via `workspace`, so it lands in
+that workspace), then the known cwd paths, a custom path, or the remote default; the last used
+directory is remembered per remote. It calls `POST /api/remote-hosts/session/create`, and opens the
+new session in that backend's pane.
 
 Remote sessions stay inside the backend's own proxied UI; they are not native local sessions.
 Earlier embedded overviews (sidebar mirror, iframe page, hero row) were removed deliberately —

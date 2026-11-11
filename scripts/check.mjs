@@ -147,6 +147,13 @@ assert.equal(await entry.resolveRemoteWorkspace({ id: 'n100' }, '11111111-1111-1
 assert.equal(await entry.resolveRemoteWorkspace({ id: 'n100' }, '', readWorkspaceStore), undefined)
 await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/nope', readWorkspaceStore), /workspace path not found on n100: \/nope; known: \/home\/u\/a, \/home\/u\/b/)
 await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, 'relative/path', readWorkspaceStore), /absolute path/)
+
+// session timestamps are local time with an explicit UTC offset, not bare UTC
+const formatted = entry.formatSessionTime(Date.UTC(2026, 0, 2, 3, 4, 0))
+assert.match(formatted, /^\d{4}-\d{2}-\d{2} \d{2}:\d{2} \(UTC[+-]\d{2}:\d{2}\)$/, 'formatSessionTime renders local time + offset')
+assert.equal(entry.formatSessionTime(undefined), '')
+assert.equal(entry.formatSessionTime(null), '')
+assert.equal(entry.formatSessionTime('nope'), '')
 await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/home/u/a', async function () { return undefined }), /workspace store is unreadable/)
 await assert.rejects(entry.resolveRemoteWorkspace({ id: 'n100' }, '/home/u/a', async function () { return 'not json' }), /not valid JSON/)
 
