@@ -35,6 +35,18 @@ P0 已完成，并用真实的远端经 `ssh -L` 端到端验证：
 | 未知远端 | 404 |
 | 同时挂两个远端 | 均 200/101，各自的 boot 图互不干扰 |
 
+## 截图
+
+Hub 顶栏的环境切换器——`本机 (local)` 加所有已注册远端；选中某个远端后，它的后端在面板里打开，
+hub 页面本身不刷新：
+
+![Hub 顶栏，当前选中本机](docs/images/hub-top-bar-switcher.png)
+
+在 hub 面板里打开的远端正端：这个会话是带 `workspace` 选项创建的，因此归入远端的 `new_fw`
+工作区（左侧栏），而不是只占一个 cwd：
+
+![加入 new_fw 工作区的远端会话](docs/images/remote-workspace-session.png)
+
 ## 管理界面
 
 远端管理已并入统一的 **Plugins** 页面：**设置 → 插件 → dsh-remote-hub**（该插件的详情页）。插件在那里贡献两块内容：

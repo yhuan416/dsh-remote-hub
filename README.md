@@ -39,6 +39,18 @@ Validated end-to-end against a real remote over `ssh -L`:
 | unknown remote | 404 |
 | two remotes at once | both 200/101, independent boot graphs |
 
+## Screenshots
+
+Hub with the top-bar environment switcher — `本机 (local)` plus every registered remote; picking a
+remote shows that backend in a pane without reloading the hub page:
+
+![Hub top bar with the local backend selected](docs/images/hub-top-bar-switcher.png)
+
+A remote backend rendered inside the hub pane: this session was created with the `workspace`
+option, so it belongs to the remote's `new_fw` workspace (left sidebar) instead of a bare cwd:
+
+![A remote session that joined the new_fw workspace](docs/images/remote-workspace-session.png)
+
 ## Management UI
 
 Remote management lives in the unified **Plugins** page: **Settings → Plugins → dsh-remote-hub**
