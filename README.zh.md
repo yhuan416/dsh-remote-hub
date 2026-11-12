@@ -1,17 +1,50 @@
 # dsh-remote-hub
 
+<p align="center">
+  <a href="https://github.com/yhuan416/dsh-remote-hub/releases"><img alt="release" src="https://img.shields.io/github/v/tag/yhuan416/dsh-remote-hub?label=release&sort=semver"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/yhuan416/dsh-remote-hub"></a>
+  <img alt="node" src="https://img.shields.io/badge/node-%3E%3D22.19.0-brightgreen">
+  <img alt="dsh" src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-blue">
+  <a href="https://github.com/yhuan416/dsh-remote-hub/actions/workflows/check.yml"><img alt="check" src="https://github.com/yhuan416/dsh-remote-hub/actions/workflows/check.yml/badge.svg"></a>
+</p>
+
 > [English](README.md) | 中文
 >
 > 部署步骤见 [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md) ｜ 鲁棒性说明见 [docs/ROBUSTNESS.zh.md](docs/ROBUSTNESS.zh.md)
 > 架构：[ARCHITECTURE.md](ARCHITECTURE.md) ｜ 中文架构总览：[docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md) ｜ 兼容性：[COMPATIBILITY.md](COMPATIBILITY.md)
 > 变更记录：[CHANGELOG.md](CHANGELOG.md) ｜ 路线图：[ROADMAP.md](ROADMAP.md)（中文：[docs/ROADMAP.zh.md](docs/ROADMAP.zh.md)）
+> 同族项目：[dsh-remote-agent](https://github.com/yhuan416/dsh-remote-agent) ｜ [dsh-opencode-client](https://github.com/yhuan416/dsh-opencode-client)
 
-Hub 侧的 DSH 宿主插件。一台 `dsh web`（Hub）以自己的 origin 服务浏览器，并把每个已注册的远端后端
-反向代理到 `/remotes/<id>/` 下。因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 的同源限制
-所要求的（Host/Origin 必须一致、`SameSite=Strict` Cookie、全站没有 CORS）。
+**一个浏览器标签页，管所有 dsh 后端。** Hub 就是一台 `dsh web`，它把每个已注册的远端后端反向代理到
+`/remotes/<id>/` 下，因此浏览器始终只与 Hub 这一个 origin 通信——这正是 DSH 同源限制所要求的
+（Host/Origin 一致、`SameSite=Strict` Cookie、全站无 CORS）。一个远端只是一个 Hub 能访问的 HTTP 基址：
+手动 `ssh -L`、插件托管的隧道，或未来的 agent 通道；代理代码本身不变。
 
-传输方式刻意放在插件之外：一个远端只是一个 Hub 能访问的 HTTP 基址。这个地址可以来自手动 `ssh -L`、
-插件托管的 ssh 隧道，或未来某种 agent 通道——代理代码本身不变。
+## 快速开始
+
+```sh
+# 1. 在 Hub 侧把插件装进 dsh profile
+git clone https://github.com/yhuan416/dsh-remote-hub ~/.dsh/plugins/dsh-remote-hub
+cd ~/.dsh/plugins/dsh-remote-hub && ./scripts/install.sh web
+
+# 2. 让后端发布自己的 token：在远端装 dsh-remote-agent
+#    https://github.com/yhuan416/dsh-remote-agent  →  ./scripts/install.sh web
+
+# 3. 重启 Hub，然后打开 设置 → 插件 → dsh-remote-hub 添加远端
+dsh web
+```
+
+之后顶栏会列出「本机」和所有远端；选中某个远端就在面板里打开它的后端，**＋ 在 <远端> 新建会话**
+可以直接在指定工作区里建会话。完整步骤见[安装到 profile](#安装到-profile) 与
+[docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)；离线自检：`npm run check`。
+
+## 目录
+
+- [当前状态](#当前状态) · [截图](#截图) · [管理界面](#管理界面)
+- [切换环境与新建远端会话](#切换环境与新建远端会话) · [存储](#存储) · [远端子代理](#远端子代理)
+- [管理 API](#管理-apiowner-only同源-cookie) · [默认入口上的切换器](#默认入口上的切换器) · [入口点](#入口点)
+- [工作原理](#工作原理) · [配置](#配置) · [传输方式](#传输方式) · [安装到 profile](#安装到-profile)
+- [常见问题](#常见问题) · [生态](#生态) · [路线图](#路线图)
 
 ## 当前状态
 
@@ -193,6 +226,20 @@ Hub 可以把任务交给远端 dsh 后端，在它自己的环境（文件、�
 
 ## 工作原理
 
+```mermaid
+flowchart LR
+  browser["浏览器<br/>(只与 Hub 同源)"]
+  hub["dsh web — Hub<br/>dsh-remote-hub"]
+  sub["dsh web — 远端 A<br/>+ dsh-remote-agent"]
+  sub2["dsh web — 远端 B<br/>+ dsh-remote-agent"]
+
+  browser -->|"同源 HTTP / SSE / WS"| hub
+  hub -->|"/remotes/a/* → 127.0.0.1:3182"| sub
+  hub -->|"/remotes/b/* → 127.0.0.1:3183"| sub2
+  sub -.->|"写入 remote-agent.json<br/>(token + 端口)"| hub
+  sub2 -.->|"写入 remote-agent.json"| hub
+```
+
 1. Hub 像普通 dsh 页面一样认证浏览器（自己的 token/Cookie）。
 2. 对每个远端，插件在**服务端**保存一份 Cookie：首次使用时由插件自己完成远端的
    `GET /?token=<token>` 交换并缓存。浏览器永远看不到远端 token 和远端 Cookie。
@@ -292,6 +339,25 @@ cd ~/.dsh/plugins/dsh-remote-hub
 改动前自动备份。之后必须重启 `dsh web`（bundle 选择在启动期组合）。
 
 管理入口：**设置 → 插件 → 已安装插件 → dsh-remote-hub**。
+
+## 常见问题
+
+| 现象 | 排查 |
+|---|---|
+| 远端标签一直是灰/红 | 看 `GET /api/remote-hosts/list` 的 `state`、`tunnel.state`、`lastError`。`ssh -L` 断了会显示 `offline`；监视线程会退避重试，连续失败 3 次且端口未固定时自动换端口。 |
+| `/remotes/<id>/` 返回 401 | Hub 的 Cookie 交换失败。确认后端写好了 `~/.dsh/remote-agent.json`（已装 dsh-remote-agent 并重启），且 ssh 目标能读到它。 |
+| 远端返回 403 | 撞上了 Host/Origin 校验。只能通过 Hub 的 origin 访问；其它站点直接带 `Origin` 请求会被刻意拒绝。 |
+| 新建会话报 `workspace path not found` | 该路径在后端不是工作区，报错里会列出已知路径；远端没有 ssh 端点读不到 workspace store 时，请直接传工作区 id（uuid）。 |
+| 某个远端出现 `versionWarning` | Hub 与远端的 dsh 版本不一致。不致命，见 [COMPATIBILITY.md](COMPATIBILITY.md)。 |
+| 改完代码 `npm run check` 失败 | 两段内联浏览器脚本是字符串拼接的，`check.mjs` / `check-launcher.mjs` 会解析它们，专门用来抓「转义坏了导致顶栏空白」这类问题。 |
+
+## 生态
+
+| 项目 | 职责 |
+|---|---|
+| **dsh-remote-hub**（本仓库） | Hub 侧：反向代理、隧道、token 交换、顶栏切换、远端子代理 provider。 |
+| [dsh-remote-agent](https://github.com/yhuan416/dsh-remote-agent) | 远端侧：运行在每个后端 `dsh web` 里，发布 launch token + 身份，Hub 无需手工拷 token。 |
+| [dsh-opencode-client](https://github.com/yhuan416/dsh-opencode-client) | 独立插件：把 OpenCode 变成 dsh 的客户端 / 子代理后端（会话、委派、目录）。 |
 
 ## 路线图
 

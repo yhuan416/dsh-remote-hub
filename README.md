@@ -1,5 +1,13 @@
 # dsh-remote-hub
 
+<p align="center">
+  <a href="https://github.com/yhuan416/dsh-remote-hub/releases"><img alt="release" src="https://img.shields.io/github/v/tag/yhuan416/dsh-remote-hub?label=release&sort=semver"></a>
+  <a href="LICENSE"><img alt="license" src="https://img.shields.io/github/license/yhuan416/dsh-remote-hub"></a>
+  <img alt="node" src="https://img.shields.io/badge/node-%3E%3D22.19.0-brightgreen">
+  <img alt="dsh" src="https://img.shields.io/badge/dsh-%3E%3D0.2.1--rc.2-blue">
+  <a href="https://github.com/yhuan416/dsh-remote-hub/actions/workflows/check.yml"><img alt="check" src="https://github.com/yhuan416/dsh-remote-hub/actions/workflows/check.yml/badge.svg"></a>
+</p>
+
 > English | [中文](README.zh.md)
 >
 > Deployment guide (Chinese): [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md)
@@ -7,15 +15,40 @@
 > Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) · 中文架构总览: [docs/ARCHITECTURE.zh.md](docs/ARCHITECTURE.zh.md)
 > Compatibility: [COMPATIBILITY.md](COMPATIBILITY.md)
 > Changelog: [CHANGELOG.md](CHANGELOG.md) · Roadmap: [ROADMAP.md](ROADMAP.md) (中文: [docs/ROADMAP.zh.md](docs/ROADMAP.zh.md))
+> Sibling projects: [dsh-remote-agent](https://github.com/yhuan416/dsh-remote-agent) · [dsh-opencode-client](https://github.com/yhuan416/dsh-opencode-client)
 
-Hub-side DSH host plugin. One `dsh web` (the hub) serves the browser at its own origin and
-reverse-proxies every registered remote backend under `/remotes/<id>/`. The browser therefore
-only ever talks to the hub origin — which is what DSH's same-origin fences require
-(Host/Origin equality, `SameSite=Strict` cookies, no CORS).
+**One browser tab, every dsh backend.** The hub is a single `dsh web` that reverse-proxies each
+registered remote backend under `/remotes/<id>/`, so the browser only ever talks to the hub origin —
+which is what DSH's same-origin fences require (Host/Origin equality, `SameSite=Strict` cookies, no
+CORS). A remote is just an HTTP base URL the hub can reach: a manual `ssh -L`, a plugin-managed
+tunnel, or a future agent channel. The proxy code does not change.
 
-Transport is deliberately out of scope: a remote is just an HTTP base URL the hub can reach.
-That URL can come from a manual `ssh -L`, a later auto-managed tunnel, or a future agent
-channel — the proxy code does not change.
+## Quick start
+
+```sh
+# 1. install the plugin into a dsh profile (hub side)
+git clone https://github.com/yhuan416/dsh-remote-hub ~/.dsh/plugins/dsh-remote-hub
+cd ~/.dsh/plugins/dsh-remote-hub && ./scripts/install.sh web
+
+# 2. make sure the backend publishes its token: install dsh-remote-agent there
+#    https://github.com/yhuan416/dsh-remote-agent  →  ./scripts/install.sh web
+
+# 3. restart the hub, then open 设置 → 插件 → dsh-remote-hub and add the remote
+dsh web
+```
+
+The top bar then lists 本机 plus every remote; picking one shows that backend in a pane, and
+**＋ 在 <remote> 新建会话** creates a session in a chosen workspace. Full details:
+[Install into a profile](#install-into-a-profile) and [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md).
+Offline self-check: `npm run check`.
+
+## Table of contents
+
+- [Status](#status) · [Screenshots](#screenshots) · [Management UI](#management-ui)
+- [Remote subagents](#remote-subagents) · [Remote session control](#remote-session-control) · [OpenCode remotes](#opencode-remotes-prototype)
+- [Store](#store) · [Admin API](#admin-api-owner-only-same-origin-cookie) · [Entry link](#entry-link-on-the-default-ui)
+- [How it works](#how-it-works) · [Config](#config) · [Transport](#transport) · [Install](#install-into-a-profile)
+- [Troubleshooting](#troubleshooting) · [Ecosystem](#ecosystem) · [Roadmap](#roadmap)
 
 ## Status
 
@@ -241,6 +274,20 @@ section — no build step for either half.
 
 ## How it works
 
+```mermaid
+flowchart LR
+  browser["browser<br/>(hub origin only)"]
+  hub["dsh web — hub<br/>dsh-remote-hub"]
+  sub["dsh web — remote A<br/>+ dsh-remote-agent"]
+  sub2["dsh web — remote B<br/>+ dsh-remote-agent"]
+
+  browser -->|"same-origin HTTP / SSE / WS"| hub
+  hub -->|"/remotes/a/* → 127.0.0.1:3182"| sub
+  hub -->|"/remotes/b/* → 127.0.0.1:3183"| sub2
+  sub -.->|"writes remote-agent.json<br/>(token + port)"| hub
+  sub2 -.->|"writes remote-agent.json"| hub
+```
+
 1. The hub authenticates the browser exactly like any dsh page (its own token/cookie).
 2. For each remote the plugin keeps a **server-side** cookie: on first use it performs the
    remote's `GET /?token=<token>` exchange itself and caches the pair. The browser never sees
@@ -346,6 +393,25 @@ Offline checks after editing: `npm run check` (module exports + generated markup
 setup: [docs/DEPLOY.zh.md](docs/DEPLOY.zh.md).
 
 Management lives in **Settings → Plugins → Installed plugins → dsh-remote-hub**.
+
+## Troubleshooting
+
+| Symptom | Check |
+|---|---|
+| Remote tab stays grey / red | `GET /api/remote-hosts/list`: `state`, `tunnel.state`, `lastError`. A dead `ssh -L` shows as `offline`; the supervisor retries with backoff and reallocates the port after 3 failed attempts unless the port was pinned. |
+| `401` on `/remotes/<id>/` | The hub cookie exchange failed. Verify the backend wrote `~/.dsh/remote-agent.json` (dsh-remote-agent installed + restarted) and that the ssh target can read it. |
+| `403` from a remote | Host/Origin fence. Only request through the hub origin; a direct `Origin` header from another site is rejected on purpose. |
+| `new session` fails with `workspace path not found` | The path is not a workspace on that backend; the error lists the known paths. Pass a workspace id (uuid) when the remote has no ssh endpoint to read its store. |
+| `versionWarning` on a remote | Hub and remote run different dsh versions. Not fatal — see [COMPATIBILITY.md](COMPATIBILITY.md). |
+| `npm run check` fails after editing | The two inline browser scripts are string-concatenated; `check.mjs` / `check-launcher.mjs` parse them, which catches a broken escape that would otherwise render a blank bar. |
+
+## Ecosystem
+
+| Project | Role |
+|---|---|
+| **dsh-remote-hub** (this repo) | Hub side: reverse proxy, tunnels, token exchange, top-bar switching, remote subagent providers. |
+| [dsh-remote-agent](https://github.com/yhuan416/dsh-remote-agent) | Remote side: runs in every backend `dsh web` and publishes its launch token + identity so the hub needs no manual token copy. |
+| [dsh-opencode-client](https://github.com/yhuan416/dsh-opencode-client) | Separate plugin that makes OpenCode a dsh client/subagent backend (sessions, delegation, catalogs). |
 
 ## Roadmap
 

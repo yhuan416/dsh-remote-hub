@@ -1,0 +1,10 @@
+# Normalize line endings; mark binary assets so diffs stay readable.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.svg text eol=lf

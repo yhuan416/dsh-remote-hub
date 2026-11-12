@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- GitHub Actions workflow (`.github/workflows/check.yml`) running `npm run check` on push/PR.
+- `.gitattributes` (LF normalization, binary markers) and `.editorconfig`.
+- README: badge block, quick start, table of contents, an embedded mermaid topology diagram,
+  a Troubleshooting table, and an Ecosystem table linking the three sibling projects;
+  both English and Chinese READMEs kept structurally in sync.
+
 ## 0.6.0 — 2026-11-11
 
 ### Added
