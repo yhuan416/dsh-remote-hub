@@ -86,3 +86,63 @@ backend 侧用 `dsh-remote-agent` 把 launch token 写到 `$DSH_HOME/remote-agen
 - 不做分布式一致性（会话不复制、不迁移）；节点各自拥有自己的状态。
 - 不做"中央控制台"：任何节点都可以当 viewer，但没有必须存在的中心。
 - 不在 M1–M3 阶段支持跨节点工单（mining-superagent 的单项目单实例语义不变）。
+
+## 7. 包与命名：星型的名字应当合并
+
+现状是两个包，名字本身就编码了角色（hub = 中心，agent = 被控端），到了 P2P 就没有这个区分了：
+
+| 现状 | P2P 下 |
+|---|---|
+| `dsh-remote-hub`（viewer + 反代）| 不存在独立角色：**viewer 是任何节点的一个能力** |
+| `dsh-remote-agent`（backend 发布身份）| 不存在独立角色：**serve 是任何节点的一个能力** |
+| 插件 id `remote-hub` / `remote-agent` | 一个插件 id：`remote` |
+| URL `/remotes/<id>/` | `/peers/<nodeId>/`（保留 `/remotes` 301 别名一个版本）|
+| 存储 `remote-hosts.json` | `peers.json`（启动时读旧文件并迁移）|
+
+**推荐：合并为单包 `dsh-remote`，单插件 id `remote`**，内部按能力分模块：
+
+```
+src/index.js        cordis 插件入口：同时挂 viewer 与 backend 能力
+src/identity.js     节点密钥、签名 token、配对（M2）
+src/registry.js     peers.json —— 本节点自己的对端列表（无全局文件）
+src/transport/      ssh-tunnel.js / direct-http.js / agent-channel.js（M2–M3）
+src/viewer.js       /peers/<nodeId>/ 反代、顶栏切换、会话创建
+src/backend.js      暴露本节点 gateway、发布身份与 endpoints（吸收 remote-agent）
+```
+
+**改名成本很低**：这两个包不是 npm 发布物（git clone + `install.sh` 装进 profile），没有外部 npm 消费者，
+所以不涉及 npm 弃用流程；影响面只有：文档、`install.sh`、profile 的 bundle 列表（`dsh-remote-hub` → `dsh-remote`）、
+以及我们自己的 mining 部署文档。旧仓库发最后一个 `0.7.x`，README 指向新仓库即可；插件 id 改名时保留旧 id 识别一个版本。
+
+## 8. 目标形态（1.0）
+
+每个节点都是「`dsh` + 同一个 `dsh-remote` 插件」，节点之间只有成对的 link，没有中心：
+
+```
+        ┌──────────────── 任一节点的面板（本地聚合）────────────────┐
+        │  本机 │ peer: n100 │ peer: e5 │ + 配对 / 发现            │
+        └───────────────────────────┬──────────────────────────────┘
+                                    │ viewer 能力（本地，在谁打开就在谁那）
+     WSL 节点 ◄─── link ───► n100 节点 ◄─── link ───► e5 节点
+     身份 ed25519-A         身份 -B             身份 -C
+     serve + view           serve + view        serve + view
+```
+
+- **link 是成对的**：任一侧发起配对，互存公钥；一条 link 可承载多个 viewer，token 按 viewer 短签（`aud/ttl/scope`）。
+- **角色是能力不是配置**：有浏览器/需要看图 = viewer；被配对 = serve；同一节点可以同时两者（n100 既是 mining 实例又是别人的面板）。
+- **发现**：同 LAN 用 mDNS 出现「可配对节点」；跨网用出站 channel，rendezvous 只交换地址（不代理数据）。
+- **状态**：会话、工单、凭据永不出节点；面板只是本地聚合；不做全局会话服务。
+- **安全**：配对即互信；每个 peer 有 ACL（只读面板 / 可建会话 / 可注入 prompt）；token TTL；操作审计。
+
+## 9. 从今天迁到 P2P 的步骤
+
+| 步骤 | 动作 | 破坏性 |
+|---|---|---|
+| 1（已完成）| 0.7.x：单写者资源治理（per-pid 登记 + `DSH_HOME` 锁）| 无 |
+| 2 | 合并为 `dsh-remote` 单包；旧 id / URL / 文件名保留兼容；两个旧仓库归档并指向新仓库 | profile bundle 列表改一行 |
+| 3 | M2：节点身份 + 签名 token，脱离「ssh 读明文 token」| 需配对一次 |
+| 4 | M3：`agent-channel` 出站传输（NAT 后、无 ssh 可互通）| 无 |
+| 5 | M4：mDNS 发现 + 配对 UX；`/remotes` → `/peers` 别名一个版本后移除 | 书签更新 |
+
+对 mining 部署的影响：目前只体现在 profile 的 `bundles` 与 `deploy/provision-instance.sh` 里的插件 id；
+mining 实例本身（一个项目一个 `DSH_HOME`）的语义不变。
