@@ -340,6 +340,18 @@ cd ~/.dsh/plugins/dsh-remote-hub
 
 管理入口：**设置 → 插件 → 已安装插件 → dsh-remote-hub**。
 
+## 多实例与单例资源
+
+Hub 与 backend 各有**按进程/按 `DSH_HOME` 的单例资源**，混用会互相踩：
+
+| 资源 | 位置 | 规则 |
+|---|---|---|
+| 隧道登记 | `$DSH_HOME/remote-hub-tunnels.<pid>.json`（0.7.0 起；旧版是单文件）| 每个 Hub 进程自己一份；启动清理只回收**所属 Hub 已退出**的隧道 |
+| Hub 锁 | `$DSH_HOME/remote-hub.lock` | 一个 `DSH_HOME` 只允许一个 Hub；第二个实例报错并且不注册 `/remotes` |
+| backend 身份 | `$DSH_HOME/remote-agent.json` | 一台机器多个 backend 时，每个实例用独立 `DSH_HOME`，或在 `dsh-remote-agent` 配置里用 `file` 指定不同路径 |
+
+多个 Hub 共存：各自独立 `DSH_HOME` + 独立端口即可；首次同时启动的端口竞态由"占用即回退随机端口"兜住。
+
 ## 常见问题
 
 | 现象 | 排查 |

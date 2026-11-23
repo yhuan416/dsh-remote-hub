@@ -434,3 +434,16 @@ page) now lives in the separate **dsh-opencode-client** project.
 
 This plugin keeps only dsh-backend concerns: reverse proxy, SSH tunnels, the top-bar switcher, and
 `remote_sessions` for dsh remote hosts.
+
+## Multiple hubs and singleton resources
+
+Hub and backends each own per-process / per-`DSH_HOME` resources; sharing them makes the instances fight:
+
+| Resource | Location | Rule |
+|---|---|---|
+| Tunnel registry | `$DSH_HOME/remote-hub-tunnels.<pid>.json` (0.7.0+; a single file before) | One file per hub process; startup reaping only kills tunnels whose owning hub is gone |
+| Hub lock | `$DSH_HOME/remote-hub.lock` | One hub per `DSH_HOME`; a second instance reports an error and registers no `/remotes` |
+| Backend identity | `$DSH_HOME/remote-agent.json` | Several backends on one machine need separate `DSH_HOME`s, or distinct `file` paths in `dsh-remote-agent` configuration |
+
+Running several hubs: give each its own `DSH_HOME` and port; a first-start port race is absorbed by falling back to a free port.
+

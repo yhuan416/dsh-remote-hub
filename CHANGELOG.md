@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.7.0 — 2026-11-23
+
+### Fixed
+
+- **Two hubs no longer fight over each other's ssh tunnels.** The tunnel registry is one file per hub process
+  (`$DSH_HOME/remote-hub-tunnels.<pid>.json`) instead of one shared `remote-hub-tunnels.json`, and the startup sweep only
+  kills tunnels whose owning hub process is gone. Previously a second hub (or a restarted one) SIGTERM-ed every recorded
+  `ssh -L` child — including tunnels belonging to a live hub — so the hubs kept rebuilding each other's tunnels.
+- **One hub per `DSH_HOME`.** The hub now takes `$DSH_HOME/remote-hub.lock` (pid + process start ticks) and starts a second
+  instance on the same home with a clear error instead of racing: no `/remotes` routes, no tunnel, no shared session writes.
+  The lock is released and the tunnel registry removed on shutdown, so a crashed hub's leftovers are still swept.
+
+### Notes
+
+- Legacy `remote-hub-tunnels.json` files are adopted and cleaned once; new tunnels are recorded per process.
+- Harness instances that should be reachable through a hub still need their own `DSH_HOME` (or a distinct identity file:
+  `dsh-remote-agent` supports `file` in its config) for the same reason.
+
+
 ### Added
 
 - GitHub Actions workflow (`.github/workflows/check.yml`) running `npm run check` on push/PR.
