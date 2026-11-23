@@ -1,3 +1,8 @@
+> **Deprecated — merged into [dsh-remote-p2p](https://github.com/yhuan416/dsh-remote-p2p).**
+> This package and `dsh-remote-agent` now live in one plugin that serves both halves of a remote link.
+> `dsh-remote-p2p/scripts/install.sh` migrates a profile automatically (keeps `remote-hosts.json` and `remote-agent.json`).
+> Bug fixes land there; this repository stays for history.
+
 # dsh-remote-hub
 
 <p align="center">
